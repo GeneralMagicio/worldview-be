@@ -56,7 +56,6 @@ model Tag{
 
 }
 
-
 model Vote{
   id Int @id @default(autoincrement())
   weight Int 
