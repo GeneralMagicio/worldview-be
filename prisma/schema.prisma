@@ -12,3 +12,57 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+
+model User {
+  worldID                 String   @id
+  name                    String
+  profilePicture          String?
+  pollsCreatedCount       Int      @default(0)
+  pollsParticipatedCount  Int      @default(0)
+  createdPolls            Poll[]   @relation("PollAuthor")
+  votes                   Vote[]
+  actions                 UserAction[]
+}
+
+model UserAction {
+  id        String   @id @default(uuid())
+  worldID   String
+  actionID  String   @unique
+  pollID    String
+  type      ActionType
+  user      User     @relation(fields: [worldID], references: [worldID], onDelete: Cascade)
+}
+
+model Poll {
+  pollID            String   @id @default(uuid())
+  authorUserID      String
+  title            String
+  description      String?
+  options          String[]
+  creationDate     DateTime @default(now())
+  startDate        DateTime
+  endDate          DateTime
+  tags             String[]
+  isAnonymous      Boolean  @default(false)
+  participantCount Int      @default(0)
+  voteResults      Json
+  author          User      @relation("PollAuthor", fields: [authorUserID], references: [worldID], onDelete: Cascade)
+  votes           Vote[]
+}
+
+model Vote {
+  voteID            String   @id @default(uuid())
+  worldID           String
+  pollID            String
+  votingPower       Int
+  weightDistribution Json
+  proof             String
+  user             User     @relation(fields: [worldID], references: [worldID], onDelete: Cascade)
+  poll             Poll     @relation(fields: [pollID], references: [pollID], onDelete: Cascade)
+}
+
+enum ActionType {
+  CREATED
+  VOTED
+}
