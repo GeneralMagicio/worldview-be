@@ -3,21 +3,22 @@ CREATE TYPE "ActionType" AS ENUM ('CREATED', 'VOTED');
 
 -- CreateTable
 CREATE TABLE "User" (
+    "id" SERIAL NOT NULL,
     "worldID" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "profilePicture" TEXT,
     "pollsCreatedCount" INTEGER NOT NULL DEFAULT 0,
     "pollsParticipatedCount" INTEGER NOT NULL DEFAULT 0,
 
-    CONSTRAINT "User_pkey" PRIMARY KEY ("worldID")
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "UserAction" (
-    "id" TEXT NOT NULL,
-    "worldID" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "actionID" TEXT NOT NULL,
-    "pollID" TEXT NOT NULL,
+    "pollId" INTEGER NOT NULL,
     "type" "ActionType" NOT NULL,
 
     CONSTRAINT "UserAction_pkey" PRIMARY KEY ("id")
@@ -25,8 +26,8 @@ CREATE TABLE "UserAction" (
 
 -- CreateTable
 CREATE TABLE "Poll" (
-    "pollID" TEXT NOT NULL,
-    "authorUserID" TEXT NOT NULL,
+    "pollId" SERIAL NOT NULL,
+    "authorUserId" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "options" TEXT[],
@@ -38,14 +39,14 @@ CREATE TABLE "Poll" (
     "participantCount" INTEGER NOT NULL DEFAULT 0,
     "voteResults" JSONB NOT NULL,
 
-    CONSTRAINT "Poll_pkey" PRIMARY KEY ("pollID")
+    CONSTRAINT "Poll_pkey" PRIMARY KEY ("pollId")
 );
 
 -- CreateTable
 CREATE TABLE "Vote" (
     "voteID" TEXT NOT NULL,
-    "worldID" TEXT NOT NULL,
-    "pollID" TEXT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "pollId" INTEGER NOT NULL,
     "votingPower" INTEGER NOT NULL,
     "weightDistribution" JSONB NOT NULL,
     "proof" TEXT NOT NULL,
@@ -54,16 +55,22 @@ CREATE TABLE "Vote" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_worldID_key" ON "User"("worldID");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserAction_actionID_key" ON "UserAction"("actionID");
 
 -- AddForeignKey
-ALTER TABLE "UserAction" ADD CONSTRAINT "UserAction_worldID_fkey" FOREIGN KEY ("worldID") REFERENCES "User"("worldID") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "UserAction" ADD CONSTRAINT "UserAction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Poll" ADD CONSTRAINT "Poll_authorUserID_fkey" FOREIGN KEY ("authorUserID") REFERENCES "User"("worldID") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "UserAction" ADD CONSTRAINT "UserAction_pollId_fkey" FOREIGN KEY ("pollId") REFERENCES "Poll"("pollId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Vote" ADD CONSTRAINT "Vote_worldID_fkey" FOREIGN KEY ("worldID") REFERENCES "User"("worldID") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Poll" ADD CONSTRAINT "Poll_authorUserId_fkey" FOREIGN KEY ("authorUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Vote" ADD CONSTRAINT "Vote_pollID_fkey" FOREIGN KEY ("pollID") REFERENCES "Poll"("pollID") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Vote" ADD CONSTRAINT "Vote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Vote" ADD CONSTRAINT "Vote_pollId_fkey" FOREIGN KEY ("pollId") REFERENCES "Poll"("pollId") ON DELETE RESTRICT ON UPDATE CASCADE;

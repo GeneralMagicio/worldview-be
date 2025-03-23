@@ -15,7 +15,8 @@ datasource db {
 
 
 model User {
-  worldID                 String   @id
+  id                      Int   @id @default(autoincrement())
+  worldID                 String   @unique
   name                    String
   profilePicture          String?
   pollsCreatedCount       Int      @default(0)
@@ -26,40 +27,43 @@ model User {
 }
 
 model UserAction {
-  id        String   @id @default(uuid())
-  worldID   String
+  id        Int   @id @default(autoincrement())
+  userId   Int
   actionID  String   @unique
-  pollID    String
+  pollId  Int
   type      ActionType
-  user      User     @relation(fields: [worldID], references: [worldID], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  poll      Poll       @relation(fields: [pollId], references: [pollId])
+ 
 }
 
 model Poll {
-  pollID            String   @id @default(uuid())
-  authorUserID      String
+  pollId           Int   @id @default(autoincrement())
+  authorUserId     Int
   title            String
   description      String?
   options          String[]
   creationDate     DateTime @default(now())
   startDate        DateTime
-  endDate          DateTime
+  endDate          DateTime 
   tags             String[]
   isAnonymous      Boolean  @default(false)
   participantCount Int      @default(0)
   voteResults      Json
-  author          User      @relation("PollAuthor", fields: [authorUserID], references: [worldID], onDelete: Cascade)
+  author          User      @relation("PollAuthor", fields: [authorUserId], references: [id])
   votes           Vote[]
+  userAction       UserAction[]
 }
 
 model Vote {
   voteID            String   @id @default(uuid())
-  worldID           String
-  pollID            String
+  userId           Int
+  pollId            Int
   votingPower       Int
   weightDistribution Json
   proof             String
-  user             User     @relation(fields: [worldID], references: [worldID], onDelete: Cascade)
-  poll             Poll     @relation(fields: [pollID], references: [pollID], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id])
+  poll             Poll     @relation(fields: [pollId], references: [pollId])
 }
 
 enum ActionType {
