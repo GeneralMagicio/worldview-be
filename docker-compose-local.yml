@@ -1,8 +1,8 @@
 services:
-  worldview-be1:
+  worldview-be:
     build:
       context: .
-    container_name: worldview-be1
+    container_name: worldview-be
     restart: always
     env_file:
       - .env
