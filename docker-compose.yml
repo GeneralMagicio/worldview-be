@@ -1,18 +1,59 @@
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres_db
+  worldview-be1:
+    image: ${DOCKER_IMAGE}
+    container_name: worldview-be1
     restart: always
-    environment:
-      - POSTGRES_DB=qv
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+    env_file:
+      - .env
     ports:
-      - '5433:5432'
+      - 3000
+    networks:
+      - worldview-backend
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+  worldview-be2:
+    image: ${DOCKER_IMAGE}
+    container_name: worldview-be2
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 3000
+    networks:
+      - worldview-backend
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    networks:
+      - worldview-backend
+    ports:
+      - 80:80
+      - 443:443
+    env_file:
+      - .env
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-}
+      - IP_WHITELIST=${IP_WHITELIST:-0.0.0.0/0}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile
+
+networks:
+  worldview-backend:
+    driver: bridge
 
 volumes:
-  postgres_data:
-    driver: local
+  caddy_data:
+  caddy_config:
