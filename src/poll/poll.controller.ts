@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { PollService } from './poll.service';
 import { Prisma } from '@prisma/client';
-import { CreatePollDto } from './createPoll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 
 @Controller('poll')
 export class PollController {
@@ -14,8 +23,9 @@ export class PollController {
   }
 
   @Get()
-  getPolls() {
-    return this.pollService.getPolls();
+  getPolls(@Req() req, @Query() query: GetPollsDto) {
+    const userId = 1;
+    return this.pollService.getPolls(userId, query);
   }
 
   @Get(':id')

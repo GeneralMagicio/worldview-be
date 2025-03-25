@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { CreatePollDto } from './createPoll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
@@ -66,8 +66,58 @@ export class PollService {
     });
   }
 
-  async getPolls() {
-    return this.databaseService.poll.findMany({});
+  async getPolls(userId: number, query: GetPollsDto) {
+    const {
+      page = 1,
+      limit = 10,
+      isActive,
+      userVoted,
+      userCreated,
+      sortBy = 'endDate',
+      sortOrder = 'asc',
+    } = query;
+    const skip = (page - 1) * limit;
+    const now = new Date();
+    const filters: any = {};
+    if (isActive) {
+      filters.startDate = { lte: now };
+      filters.endDate = { gt: now };
+    }
+    if (userCreated) {
+      filters.authorUserId = userId;
+    }
+
+    // Get polls user voted in
+    let votedPollIds: number[] = [];
+    if (userVoted) {
+      const userVotes = await this.databaseService.vote.findMany({
+        where: { userId },
+        select: { pollId: true },
+      });
+      votedPollIds = userVotes.map((v) => v.pollId);
+      filters.pollId = { in: votedPollIds };
+    }
+
+    // Sorting options
+    const orderBy: any = {};
+    if (sortBy) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      orderBy.endDate = 'asc';
+    }
+
+    // Fetch polls with pagination
+    const [polls, total] = await this.databaseService.$transaction([
+      this.databaseService.poll.findMany({
+        where: filters,
+        orderBy,
+        skip,
+        take: Number(limit),
+      }),
+      this.databaseService.poll.count({ where: filters }),
+    ]);
+
+    return { polls, total };
   }
 
   async getPollDetails(id: number) {
