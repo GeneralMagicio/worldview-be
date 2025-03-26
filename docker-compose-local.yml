@@ -1,0 +1,42 @@
+services:
+  worldview-be:
+    build:
+      context: .
+    container_name: worldview-be
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 3000
+    networks:
+      - worldview-backend
+    depends_on:
+      worldview-db:
+        condition: service_healthy
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_DB=qv
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - worldview-backend
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "qv"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  worldview-backend:
+    driver: bridge
