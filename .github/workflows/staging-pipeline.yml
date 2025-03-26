@@ -63,7 +63,7 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     env:
-      CONTAINER: "worldview-be1"
+      CONTAINER: 'worldview-be1'
     steps:
       - name: SSH and Redeploy Staging
         uses: appleboy/ssh-action@v1.2.0
@@ -102,7 +102,7 @@ jobs:
     needs: rollout-deploy-1
     runs-on: ubuntu-latest
     env:
-      CONTAINER: "worldview-be2"
+      CONTAINER: 'worldview-be2'
     steps:
       - name: SSH and Redeploy Staging
         uses: appleboy/ssh-action@v1.2.0
