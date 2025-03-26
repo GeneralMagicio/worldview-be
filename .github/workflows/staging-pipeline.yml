@@ -53,10 +53,10 @@ jobs:
             # Authenticate with GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd worldview-be
-            git checkout staging
-            git fetch origin staging
-            git reset --hard origin/staging
-            git pull origin staging
+            git checkout develop
+            git fetch origin develop
+            git reset --hard origin/develop
+            git pull origin develop
             docker compose pull
 
   rollout-deploy-1:
