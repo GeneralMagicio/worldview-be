@@ -10,7 +10,7 @@ RUN npm install -g @nestjs/cli
 RUN npm install -g corepack && corepack enable
 RUN yarn install
 COPY . .
-RUN npx prisma generate 
+RUN yarn prisma generate 
 RUN yarn run build
 EXPOSE 3000
 ENTRYPOINT ["sh", "-c", "npx prisma migrate deploy && yarn run start:prod"]
