@@ -7,6 +7,7 @@ COPY yarn.lock ./
 RUN apk update
 RUN apk add --no-cache curl openssl
 RUN npm install -g @nestjs/cli
+RUN npm install -g corepack && corepack enable
 RUN yarn install
 COPY . .
 RUN npx prisma generate 
