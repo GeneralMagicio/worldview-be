@@ -121,10 +121,17 @@ export class PollService {
   }
 
   async getPollDetails(id: number) {
-    return this.databaseService.poll.findUnique({
-      where: {
-        pollId: id,
-      },
-    });
+    try {
+      const poll = await this.databaseService.poll.findUnique({
+        where: { pollId: id },
+      });
+      const user = await this.databaseService.user.findUnique({
+        where: { id: poll?.authorUserId },
+      });
+
+      return { user, poll };
+    } catch (error) {
+      throw new Error('Database query failed');
+    }
   }
 }

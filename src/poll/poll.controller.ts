@@ -7,7 +7,9 @@ import {
   Delete,
   Req,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { PollService } from './poll.service';
 import { Prisma } from '@prisma/client';
 import { CreatePollDto, GetPollsDto } from './Poll.dto';
@@ -29,7 +31,19 @@ export class PollController {
   }
 
   @Get(':id')
-  getPollDetails(@Param('id') id: string) {
-    return this.pollService.getPollDetails(Number(id));
+  async getPollDetails(@Param('id') id: number, @Res() res: Response) {
+    try {
+      const poll = await this.pollService.getPollDetails(Number(id));
+
+      if (!poll) {
+        return res.status(404).json({ message: 'No poll found' });
+      }
+
+      return res.status(200).json(poll);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: 'Internal server error', error: error.message });
+    }
   }
 }
