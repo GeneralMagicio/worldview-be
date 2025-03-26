@@ -2,6 +2,15 @@ name: staging-pipeline
 
 on:
   workflow_dispatch:
+    inputs:
+      deployment_phase:
+        description: 'Which deployment phase to run (1, 2, or both)'
+        required: true
+        type: choice
+        options:
+          - both
+          - 1
+          - 2
   push:
     branches:
       - staging
@@ -63,7 +72,8 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     env:
-      CONTAINER: "worldview-be1"
+      CONTAINER: 'worldview-be1'
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.deployment_phase == 'both' || github.event.inputs.deployment_phase == '1') || github.event_name != 'workflow_dispatch'
     steps:
       - name: SSH and Redeploy Staging
         uses: appleboy/ssh-action@v1.2.0
@@ -102,7 +112,8 @@ jobs:
     needs: rollout-deploy-1
     runs-on: ubuntu-latest
     env:
-      CONTAINER: "worldview-be2"
+      CONTAINER: 'worldview-be2'
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.deployment_phase == 'both' || github.event.inputs.deployment_phase == '2') || github.event_name != 'workflow_dispatch'
     steps:
       - name: SSH and Redeploy Staging
         uses: appleboy/ssh-action@v1.2.0
