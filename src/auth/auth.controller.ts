@@ -5,7 +5,6 @@ import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
 
 interface IRequestPayload {
   payload: MiniAppWalletAuthSuccessPayload;
-  nonce: string;
 }
 @Controller('auth')
 export class AuthController {
@@ -30,7 +29,7 @@ export class AuthController {
     @Body() body: IRequestPayload,
     @Res() res: Response,
   ) {
-    const { payload, nonce } = body;
+    const { payload } = body;
     const storedNonce = req.cookies?.siwe;
     if (!storedNonce) {
       return res.status(400).json({
@@ -39,14 +38,11 @@ export class AuthController {
         message: 'No nonce found in cookies',
       });
     }
-    if (nonce !== storedNonce) {
-      return res
-        .status(400)
-        .json({ status: 'error', isValid: false, message: 'Invalid nonce' });
-    }
-
     try {
-      const validMessage = await this.authService.verifyPayload(payload, nonce);
+      const validMessage = await this.authService.verifyPayload(
+        payload,
+        storedNonce,
+      );
       return res.status(200).json({ isValid: validMessage });
     } catch (error: any) {
       return res
