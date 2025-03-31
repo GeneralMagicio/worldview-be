@@ -1,11 +1,12 @@
-// src/user/user.controller.ts
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   GetUserActivitiesDto,
   GetUserDataDto,
+  GetUserVotesDto,
   UserActivitiesResponseDto,
   UserDataResponseDto,
+  UserVotesResponseDto,
 } from './user.dto';
 
 @Controller('user')
@@ -24,5 +25,12 @@ export class UserController {
     @Query() query: GetUserActivitiesDto,
   ): Promise<UserActivitiesResponseDto> {
     return this.userService.getUserActivities(query);
+  }
+
+  @Post('getUserVotes')
+  async getUserVotes(
+    @Body() body: GetUserVotesDto,
+  ): Promise<UserVotesResponseDto> {
+    return this.userService.getUserVotes(body);
   }
 }
