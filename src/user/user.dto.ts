@@ -26,3 +26,14 @@ export class UserActionDto {
 export class UserActivitiesResponseDto {
   userActions: UserActionDto[];
 }
+
+export class GetUserVotesDto {
+  pollID: number;
+  worldID: string;
+}
+
+export class UserVotesResponseDto {
+  options: string[];
+  votingPower: number;
+  weightDistribution?: Record<string, number>;
+}
