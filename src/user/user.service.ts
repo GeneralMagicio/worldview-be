@@ -7,6 +7,8 @@ import {
   UserDataResponseDto,
   UserActivitiesResponseDto,
   UserActionDto,
+  GetUserVotesDto,
+  UserVotesResponseDto,
 } from './user.dto';
 
 type UserActionFilters = {
@@ -50,13 +52,10 @@ export class UserService {
       where: { worldID: dto.worldID },
       select: { id: true },
     });
-
     if (!user) {
       throw new Error('User not found');
     }
-
     const filters: UserActionFilters = { userId: user.id };
-
     const now = new Date();
     if (dto.filter === 'active') {
       filters.poll = { endDate: { gte: now } };
@@ -67,7 +66,6 @@ export class UserService {
     } else if (dto.filter === 'participated') {
       filters.type = 'VOTED';
     }
-
     const userActions = await this.databaseService.userAction.findMany({
       where: filters,
       orderBy: { poll: { endDate: 'desc' } },
@@ -85,7 +83,6 @@ export class UserService {
         },
       },
     });
-
     const actions: UserActionDto[] = userActions.map((action) => ({
       type: action.type.toLowerCase() as 'created' | 'voted',
       pollId: action.poll.pollId,
@@ -96,7 +93,39 @@ export class UserService {
       votersParticipated: action.poll.participantCount,
       authorUserId: action.poll.authorUserId,
     }));
-
     return { userActions: actions };
+  }
+
+  async getUserVotes(dto: GetUserVotesDto): Promise<UserVotesResponseDto> {
+    const user = await this.databaseService.user.findUnique({
+      where: { worldID: dto.worldID },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId: dto.pollID },
+      select: { endDate: true, options: true },
+    });
+    if (!poll || poll.endDate < new Date()) {
+      throw new Error('Poll is not active or does not exist');
+    }
+    const votes = await this.databaseService.vote.findMany({
+      where: {
+        pollId: dto.pollID,
+        userId: user.id,
+      },
+      select: { votingPower: true, weightDistribution: true },
+    });
+    if (votes.length === 0) {
+      throw new Error('Vote not found for the given poll and user');
+    }
+    const vote = votes[0];
+    return {
+      options: poll.options,
+      votingPower: vote.votingPower,
+      weightDistribution: vote.weightDistribution as Record<string, number>,
+    };
   }
 }
