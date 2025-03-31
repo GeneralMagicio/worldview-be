@@ -15,13 +15,12 @@ export class GetUserActivitiesDto {
 
 export class UserActionDto {
   type: 'created' | 'voted';
-  pollID: number;
+  pollId: number;
   pollTitle: string;
   pollDescription: string;
   endDate: Date;
-  isActive: boolean;
   votersParticipated: number;
-  authorID: string;
+  authorUserId: number;
 }
 
 export class UserActivitiesResponseDto {
