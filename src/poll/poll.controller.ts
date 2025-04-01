@@ -20,7 +20,7 @@ export class PollController {
 
   @Post()
   create(@Body() createPollDto: CreatePollDto) {
-    let userId = 1; // need to implement Auth
+    const userId = 1; // need to implement Auth
     return this.pollService.createPoll(userId, createPollDto);
   }
 
