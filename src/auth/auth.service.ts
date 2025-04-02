@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
 import {
   MiniAppWalletAuthSuccessPayload,
   verifySiweMessage,
@@ -10,16 +11,10 @@ export class AuthService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   generateNonce(length: number = 8): string {
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const charactersLength = characters.length;
-
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-
-    return result;
+    return crypto
+      .randomBytes(Math.ceil(length / 2))
+      .toString('hex')
+      .slice(0, length);
   }
 
   async verifyPayload(payload: MiniAppWalletAuthSuccessPayload, nonce: string) {
