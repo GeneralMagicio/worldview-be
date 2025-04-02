@@ -14,6 +14,7 @@ export class GetUserActivitiesDto {
 }
 
 export class UserActionDto {
+  id: number;
   type: 'created' | 'voted';
   pollId: number;
   pollTitle: string;
@@ -36,4 +37,15 @@ export class UserVotesResponseDto {
   options: string[];
   votingPower: number;
   weightDistribution?: Record<string, number>;
+}
+
+export class SetVoteDto {
+  pollId: number;
+  worldID: string;
+  weightDistribution: Record<string, number>;
+}
+
+export class SetVoteResponseDto {
+  voteID: string;
+  actionId: number;
 }

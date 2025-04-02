@@ -4,6 +4,8 @@ import {
   GetUserActivitiesDto,
   GetUserDataDto,
   GetUserVotesDto,
+  SetVoteDto,
+  SetVoteResponseDto,
   UserActivitiesResponseDto,
   UserDataResponseDto,
   UserVotesResponseDto,
@@ -32,5 +34,10 @@ export class UserController {
     @Body() body: GetUserVotesDto,
   ): Promise<UserVotesResponseDto> {
     return this.userService.getUserVotes(body);
+  }
+
+  @Post('setVote')
+  async setVote(@Body() dto: SetVoteDto): Promise<SetVoteResponseDto> {
+    return this.userService.setVote(dto);
   }
 }

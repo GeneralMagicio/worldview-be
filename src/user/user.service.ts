@@ -1,4 +1,3 @@
-// src/user/user.service.ts
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -9,7 +8,12 @@ import {
   UserActionDto,
   GetUserVotesDto,
   UserVotesResponseDto,
+  SetVoteDto,
+  SetVoteResponseDto,
 } from './user.dto';
+import { ActionType } from '@prisma/client';
+
+const votingPower = 100; // Set as a constant for now
 
 type UserActionFilters = {
   userId: number;
@@ -70,6 +74,7 @@ export class UserService {
       where: filters,
       orderBy: { poll: { endDate: 'desc' } },
       select: {
+        id: true,
         type: true,
         poll: {
           select: {
@@ -84,6 +89,7 @@ export class UserService {
       },
     });
     const actions: UserActionDto[] = userActions.map((action) => ({
+      id: action.id,
       type: action.type.toLowerCase() as 'created' | 'voted',
       pollId: action.poll.pollId,
       pollTitle: action.poll.title,
@@ -126,6 +132,47 @@ export class UserService {
       options: poll.options,
       votingPower: vote.votingPower,
       weightDistribution: vote.weightDistribution as Record<string, number>,
+    };
+  }
+
+  async setVote(dto: SetVoteDto): Promise<SetVoteResponseDto> {
+    const user = await this.databaseService.user.findUnique({
+      where: { worldID: dto.worldID },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId: dto.pollId },
+      select: { endDate: true, options: true },
+    });
+    if (!poll || poll.endDate < new Date()) {
+      throw new Error('Poll is not active or does not exist');
+    }
+
+    const vote = await this.databaseService.vote.create({
+      data: {
+        userId: user.id,
+        pollId: dto.pollId,
+        votingPower,
+        weightDistribution: dto.weightDistribution,
+        proof: '', // TODO implement Bandada proof later
+      },
+    });
+
+    const action = await this.databaseService.userAction.create({
+      data: {
+        userId: user.id,
+        pollId: dto.pollId,
+        type: ActionType.VOTED,
+      },
+    });
+
+    return {
+      voteID: vote.voteID,
+      actionId: action.id,
     };
   }
 }
