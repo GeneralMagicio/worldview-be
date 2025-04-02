@@ -70,6 +70,7 @@ export class UserService {
       where: filters,
       orderBy: { poll: { endDate: 'desc' } },
       select: {
+        actionID: true,
         type: true,
         poll: {
           select: {
@@ -84,6 +85,7 @@ export class UserService {
       },
     });
     const actions: UserActionDto[] = userActions.map((action) => ({
+      actionID: action.actionID,
       type: action.type.toLowerCase() as 'created' | 'voted',
       pollId: action.poll.pollId,
       pollTitle: action.poll.title,
@@ -105,7 +107,7 @@ export class UserService {
       throw new Error('User not found');
     }
     const poll = await this.databaseService.poll.findUnique({
-      where: { pollId: dto.pollID },
+      where: { pollId: dto.pollId },
       select: { endDate: true, options: true },
     });
     if (!poll || poll.endDate < new Date()) {
@@ -113,7 +115,7 @@ export class UserService {
     }
     const votes = await this.databaseService.vote.findMany({
       where: {
-        pollId: dto.pollID,
+        pollId: dto.pollId,
         userId: user.id,
       },
       select: { votingPower: true, weightDistribution: true },

@@ -14,6 +14,7 @@ export class GetUserActivitiesDto {
 }
 
 export class UserActionDto {
+  actionID: string;
   type: 'created' | 'voted';
   pollId: number;
   pollTitle: string;
@@ -28,7 +29,7 @@ export class UserActivitiesResponseDto {
 }
 
 export class GetUserVotesDto {
-  pollID: number;
+  pollId: number;
   worldID: string;
 }
 
