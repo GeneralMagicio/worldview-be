@@ -10,6 +10,8 @@ import {
   UserVotesResponseDto,
   SetVoteDto,
   SetVoteResponseDto,
+  EditVoteDto,
+  EditVoteResponseDto,
 } from './user.dto';
 import { ActionType } from '@prisma/client';
 
@@ -161,7 +163,6 @@ export class UserService {
         proof: '', // TODO implement Bandada proof later
       },
     });
-
     const action = await this.databaseService.userAction.create({
       data: {
         userId: user.id,
@@ -169,10 +170,47 @@ export class UserService {
         type: ActionType.VOTED,
       },
     });
-
     return {
       voteID: vote.voteID,
       actionId: action.id,
+    };
+  }
+
+  async editVote(dto: EditVoteDto): Promise<EditVoteResponseDto> {
+    const vote = await this.databaseService.vote.findUnique({
+      where: { voteID: dto.voteID },
+      select: {
+        userId: true,
+        poll: {
+          select: { endDate: true },
+        },
+      },
+    });
+    if (!vote) {
+      throw new Error('Vote not found');
+    }
+    if (vote.poll.endDate < new Date()) {
+      throw new Error('Cannot edit vote for an inactive poll');
+    }
+    const updatedVote = await this.databaseService.vote.update({
+      where: { voteID: dto.voteID },
+      data: {
+        weightDistribution: dto.weightDistribution,
+      },
+    });
+    const userAction = await this.databaseService.userAction.findFirst({
+      where: {
+        userId: vote.userId,
+        pollId: updatedVote.pollId,
+        type: ActionType.VOTED,
+      },
+      select: { id: true },
+    });
+    if (!userAction) {
+      throw new Error('User action not found');
+    }
+    return {
+      actionId: userAction.id,
     };
   }
 }

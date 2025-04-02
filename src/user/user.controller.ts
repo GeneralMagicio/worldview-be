@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
+  EditVoteDto,
+  EditVoteResponseDto,
   GetUserActivitiesDto,
   GetUserDataDto,
   GetUserVotesDto,
@@ -39,5 +41,10 @@ export class UserController {
   @Post('setVote')
   async setVote(@Body() dto: SetVoteDto): Promise<SetVoteResponseDto> {
     return this.userService.setVote(dto);
+  }
+
+  @Post('editVote')
+  async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
+    return this.userService.editVote(dto);
   }
 }

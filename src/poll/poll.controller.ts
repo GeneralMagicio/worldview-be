@@ -4,14 +4,12 @@ import {
   Post,
   Body,
   Param,
-  Delete,
   Req,
   Query,
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PollService } from './poll.service';
-import { Prisma } from '@prisma/client';
 import { CreatePollDto, GetPollsDto } from './Poll.dto';
 
 @Controller('poll')

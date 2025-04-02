@@ -49,3 +49,12 @@ export class SetVoteResponseDto {
   voteID: string;
   actionId: number;
 }
+
+export class EditVoteDto {
+  voteID: string;
+  weightDistribution: Record<string, number>;
+}
+
+export class EditVoteResponseDto {
+  actionId: number;
+}
