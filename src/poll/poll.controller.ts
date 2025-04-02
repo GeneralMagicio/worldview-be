@@ -46,4 +46,17 @@ export class PollController {
         .json({ message: 'Internal server error', error: error.message });
     }
   }
+
+  @Delete(':id')
+  async deletePoll(@Param('id') id: number, @Res() res: Response) {
+    try {
+      const poll = await this.pollService.deletePoll(Number(id));
+
+      return res.status(200).json({ message: 'Poll deleted', poll: poll });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: 'Internal server error', error: error.message });
+    }
+  }
 }
