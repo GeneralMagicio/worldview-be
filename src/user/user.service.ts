@@ -113,7 +113,7 @@ export class UserService {
       throw new Error('User not found');
     }
     const poll = await this.databaseService.poll.findUnique({
-      where: { pollId: dto.pollID },
+      where: { pollId: dto.pollId },
       select: { endDate: true, options: true },
     });
     if (!poll || poll.endDate < new Date()) {
@@ -121,7 +121,7 @@ export class UserService {
     }
     const votes = await this.databaseService.vote.findMany({
       where: {
-        pollId: dto.pollID,
+        pollId: dto.pollId,
         userId: user.id,
       },
       select: { votingPower: true, weightDistribution: true },

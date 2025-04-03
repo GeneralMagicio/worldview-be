@@ -29,7 +29,7 @@ export class UserActivitiesResponseDto {
 }
 
 export class GetUserVotesDto {
-  pollID: number;
+  pollId: number;
   worldID: string;
 }
 
