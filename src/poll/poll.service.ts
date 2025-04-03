@@ -135,12 +135,16 @@ export class PollService {
     }
   }
 
-  async deletePoll(pollId: number) {
+  async deletePoll(userId: number, pollId: number) {
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId },
     });
+
     if (!poll) {
       throw new Error('Poll not found');
+    }
+    if (poll.authorUserId !== userId) {
+      throw new Error('User Not Authorized');
     }
 
     return this.databaseService.$transaction(async (tx) => {

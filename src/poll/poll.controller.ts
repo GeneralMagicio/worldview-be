@@ -49,8 +49,9 @@ export class PollController {
 
   @Delete(':id')
   async deletePoll(@Param('id') id: number, @Res() res: Response) {
+    const userId = 1; // need to implement Auth
     try {
-      const poll = await this.pollService.deletePoll(Number(id));
+      const poll = await this.pollService.deletePoll(userId, Number(id));
 
       return res.status(200).json({ message: 'Poll deleted', poll: poll });
     } catch (error) {
