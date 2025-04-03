@@ -1,4 +1,3 @@
-// src/user/user.service.ts
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -9,7 +8,14 @@ import {
   UserActionDto,
   GetUserVotesDto,
   UserVotesResponseDto,
+  SetVoteDto,
+  SetVoteResponseDto,
+  EditVoteDto,
+  EditVoteResponseDto,
 } from './user.dto';
+import { ActionType } from '@prisma/client';
+
+const votingPower = 100; // Set as a constant for now
 
 type UserActionFilters = {
   userId: number;
@@ -70,7 +76,7 @@ export class UserService {
       where: filters,
       orderBy: { poll: { endDate: 'desc' } },
       select: {
-        actionID: true,
+        id: true,
         type: true,
         poll: {
           select: {
@@ -85,7 +91,7 @@ export class UserService {
       },
     });
     const actions: UserActionDto[] = userActions.map((action) => ({
-      actionID: action.actionID,
+      id: action.id,
       type: action.type.toLowerCase() as 'created' | 'voted',
       pollId: action.poll.pollId,
       pollTitle: action.poll.title,
@@ -128,6 +134,83 @@ export class UserService {
       options: poll.options,
       votingPower: vote.votingPower,
       weightDistribution: vote.weightDistribution as Record<string, number>,
+    };
+  }
+
+  async setVote(dto: SetVoteDto): Promise<SetVoteResponseDto> {
+    const user = await this.databaseService.user.findUnique({
+      where: { worldID: dto.worldID },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId: dto.pollId },
+      select: { endDate: true, options: true },
+    });
+    if (!poll || poll.endDate < new Date()) {
+      throw new Error('Poll is not active or does not exist');
+    }
+
+    const vote = await this.databaseService.vote.create({
+      data: {
+        userId: user.id,
+        pollId: dto.pollId,
+        votingPower,
+        weightDistribution: dto.weightDistribution,
+        proof: '', // TODO implement Bandada proof later
+      },
+    });
+    const action = await this.databaseService.userAction.create({
+      data: {
+        userId: user.id,
+        pollId: dto.pollId,
+        type: ActionType.VOTED,
+      },
+    });
+    return {
+      voteID: vote.voteID,
+      actionId: action.id,
+    };
+  }
+
+  async editVote(dto: EditVoteDto): Promise<EditVoteResponseDto> {
+    const vote = await this.databaseService.vote.findUnique({
+      where: { voteID: dto.voteID },
+      select: {
+        userId: true,
+        poll: {
+          select: { endDate: true },
+        },
+      },
+    });
+    if (!vote) {
+      throw new Error('Vote not found');
+    }
+    if (vote.poll.endDate < new Date()) {
+      throw new Error('Cannot edit vote for an inactive poll');
+    }
+    const updatedVote = await this.databaseService.vote.update({
+      where: { voteID: dto.voteID },
+      data: {
+        weightDistribution: dto.weightDistribution,
+      },
+    });
+    const userAction = await this.databaseService.userAction.findFirst({
+      where: {
+        userId: vote.userId,
+        pollId: updatedVote.pollId,
+        type: ActionType.VOTED,
+      },
+      select: { id: true },
+    });
+    if (!userAction) {
+      throw new Error('User action not found');
+    }
+    return {
+      actionId: userAction.id,
     };
   }
 }

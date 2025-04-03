@@ -46,7 +46,6 @@ export class PollService {
       await tx.userAction.create({
         data: {
           userId,
-          actionID: `created-${newPoll.pollId}-${userId}-${Date.now()}`,
           pollId: newPoll.pollId,
           type: ActionType.CREATED,
         },
