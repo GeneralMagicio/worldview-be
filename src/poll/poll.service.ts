@@ -134,4 +134,37 @@ export class PollService {
       throw new Error('Database query failed');
     }
   }
+
+  async deletePoll(userId: number, pollId: number) {
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId },
+    });
+
+    if (!poll) {
+      throw new Error('Poll not found');
+    }
+    if (poll.authorUserId !== userId) {
+      throw new Error('User Not Authorized');
+    }
+
+    return this.databaseService.$transaction(async (tx) => {
+      const deleted = await tx.poll.delete({
+        where: {
+          pollId,
+        },
+      });
+
+      // Update user's pollsCreatedCount
+      await tx.user.update({
+        where: { id: deleted.authorUserId },
+        data: {
+          pollsCreatedCount: {
+            decrement: 1,
+          },
+        },
+      });
+
+      return deleted;
+    });
+  }
 }
