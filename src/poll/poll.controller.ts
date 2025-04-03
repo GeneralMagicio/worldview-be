@@ -7,6 +7,7 @@ import {
   Req,
   Query,
   Res,
+  Delete,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PollService } from './poll.service';
