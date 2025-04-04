@@ -28,9 +28,16 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.5.0",
+    "@worldcoin/minikit-js": "^1.8.0",
     "class-validator": "^0.14.1",
+    "cookie-parser": "^1.4.7",
+    "crypto": "^1.0.1",
+    "react": "^19.1.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "viem": "^2.24.2",
+    "view": "^1.1.1",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
