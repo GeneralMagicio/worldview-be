@@ -16,8 +16,8 @@ export class CreatePollDto {
   title: string;
 
   @IsString()
-  @IsOptional()
-  description?: string;
+  @IsNotEmpty()
+  description: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -34,8 +34,8 @@ export class CreatePollDto {
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
-  tags?: string[];
+  @IsNotEmpty()
+  tags: string[];
 
   @IsBoolean()
   @IsOptional()
