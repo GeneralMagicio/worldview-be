@@ -22,7 +22,7 @@ export class PollController {
   @Post()
   @UsePipes(ValidationPipe)
   create(@Body() createPollDto: CreatePollDto) {
-    const userId = 2; // need to implement Auth
+    const userId = 1; // need to implement Auth
     return this.pollService.createPoll(userId, createPollDto);
   }
 
