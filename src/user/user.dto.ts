@@ -51,6 +51,7 @@ export class SetVoteResponseDto {
 }
 
 export class EditVoteDto {
+  userId: number;
   voteID: string;
   weightDistribution: Record<string, number>;
 }

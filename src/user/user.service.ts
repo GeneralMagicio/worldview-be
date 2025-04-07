@@ -192,6 +192,9 @@ export class UserService {
     if (vote.poll.endDate < new Date()) {
       throw new Error('Cannot edit vote for an inactive poll');
     }
+    if (vote.userId !== dto.userId) {
+      throw new Error('You are not authorized to edit this vote');
+    }
     const updatedVote = await this.databaseService.vote.update({
       where: { voteID: dto.voteID },
       data: {
