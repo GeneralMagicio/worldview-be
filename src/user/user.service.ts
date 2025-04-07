@@ -107,10 +107,13 @@ export class UserService {
   async getUserVotes(dto: GetUserVotesDto): Promise<UserVotesResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
-      select: { id: true },
+      select: { id: true, worldID: true },
     });
     if (!user) {
       throw new Error('User not found');
+    }
+    if (user.worldID !== dto.worldID) {
+      throw new Error('You are not authorized to view these votes');
     }
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId: dto.pollId },
