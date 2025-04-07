@@ -8,6 +8,8 @@ import {
   Query,
   Res,
   Delete,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PollService } from './poll.service';
@@ -18,12 +20,14 @@ export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
+  @UsePipes(ValidationPipe)
   create(@Body() createPollDto: CreatePollDto) {
-    const userId = 1; // need to implement Auth
+    const userId = 2; // need to implement Auth
     return this.pollService.createPoll(userId, createPollDto);
   }
 
   @Get()
+  @UsePipes(ValidationPipe)
   getPolls(@Req() req, @Query() query: GetPollsDto) {
     const userId = 1;
     return this.pollService.getPolls(userId, query);
