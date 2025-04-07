@@ -78,17 +78,17 @@ export class PollService {
     const skip = (page - 1) * limit;
     const now = new Date();
     const filters: any = {};
-    if (isActive === true) {
+    if (isActive) {
       filters.startDate = { lte: now };
       filters.endDate = { gt: now };
     }
-    if (userCreated === true) {
+    if (userCreated) {
       filters.authorUserId = userId;
     }
 
     // Get polls user voted in
     let votedPollIds: number[] = [];
-    if (userVoted === true) {
+    if (userVoted) {
       const userVotes = await this.databaseService.vote.findMany({
         where: { userId },
         select: { pollId: true },

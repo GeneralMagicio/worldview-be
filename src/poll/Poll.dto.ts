@@ -1,3 +1,4 @@
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -16,8 +17,8 @@ export class CreatePollDto {
   title: string;
 
   @IsString()
-  @IsOptional()
-  description?: string;
+  @IsNotEmpty()
+  description: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -34,8 +35,8 @@ export class CreatePollDto {
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
-  tags?: string[];
+  @IsNotEmpty()
+  tags: string[];
 
   @IsBoolean()
   @IsOptional()
@@ -55,14 +56,17 @@ export class GetPollsDto {
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   isActive?: boolean;
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   userVoted?: boolean;
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   userCreated?: boolean;
 
   @IsOptional()
