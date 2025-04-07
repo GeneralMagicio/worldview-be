@@ -50,6 +50,7 @@ export class GetPollsDto {
   page?: number = 1;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   limit?: number = 10;
