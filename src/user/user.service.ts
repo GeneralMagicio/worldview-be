@@ -145,7 +145,6 @@ export class UserService {
     if (!user) {
       throw new Error('User not found');
     }
-
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId: dto.pollId },
       select: { endDate: true, options: true },
@@ -153,7 +152,15 @@ export class UserService {
     if (!poll || poll.endDate < new Date()) {
       throw new Error('Poll is not active or does not exist');
     }
-
+    const existingVote = await this.databaseService.vote.findFirst({
+      where: {
+        pollId: dto.pollId,
+        userId: user.id,
+      },
+    });
+    if (existingVote) {
+      throw new Error('User has already voted in this poll');
+    }
     const vote = await this.databaseService.vote.create({
       data: {
         userId: user.id,
