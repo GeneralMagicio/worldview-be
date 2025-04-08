@@ -6,6 +6,7 @@ export class UserDataResponseDto {
   pollsCreated: number;
   pollsParticipated: number;
   worldID: string;
+  worldProfilePic?: string | null;
 }
 
 export class GetUserActivitiesDto {
