@@ -117,7 +117,7 @@ export class UserService {
       select: { endDate: true, options: true },
     });
     if (!poll || poll.endDate < new Date()) {
-      throw new Error('Poll is not active or does not exist');
+      throw new Error('Poll is not active or does not exist!');
     }
     const votes = await this.databaseService.vote.findMany({
       where: {
