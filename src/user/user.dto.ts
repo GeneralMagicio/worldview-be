@@ -23,6 +23,7 @@ export class UserActionDto {
   endDate: Date;
   votersParticipated: number;
   authorUserId: number;
+  createdAt: Date;
 }
 
 export class UserActivitiesResponseDto {
