@@ -22,15 +22,29 @@ export class PollController {
   @Post()
   @UsePipes(ValidationPipe)
   create(@Body() createPollDto: CreatePollDto) {
-    const userId = 1; // need to implement Auth
-    return this.pollService.createPoll(userId, createPollDto);
+    return this.pollService.createPoll(createPollDto);
   }
 
   @Get()
   @UsePipes(ValidationPipe)
-  getPolls(@Req() req, @Query() query: GetPollsDto) {
-    const userId = 1;
-    return this.pollService.getPolls(userId, query);
+  async getPolls(
+    @Req() req,
+    @Query() query: GetPollsDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const polls = await this.pollService.getPolls(query);
+      return res.status(200).json(polls);
+    } catch (error) {
+      if (error.message === 'User not found') {
+        return res.status(404).json({ message: error.message });
+      } else if (error.message === 'worldId Not Provided') {
+        return res.status(404).json({ message: error.message });
+      }
+      return res
+        .status(500)
+        .json({ message: 'Internal server error', error: error.message });
+    }
   }
 
   @Get(':id')

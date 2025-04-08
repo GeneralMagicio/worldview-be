@@ -7,9 +7,9 @@ import { CreatePollDto, GetPollsDto } from './Poll.dto';
 export class PollService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async createPoll(userId: number, createPollDto: CreatePollDto) {
+  async createPoll(createPollDto: CreatePollDto) {
     const user = await this.databaseService.user.findUnique({
-      where: { id: userId },
+      where: { worldID: createPollDto.worldID },
     });
     if (!user) {
       throw new BadRequestException('User does not exist');
@@ -30,7 +30,7 @@ export class PollService {
       // Create the poll
       const newPoll = await tx.poll.create({
         data: {
-          authorUserId: userId,
+          authorUserId: user.id,
           title: createPollDto.title,
           description: createPollDto.description,
           options: createPollDto.options,
@@ -45,7 +45,7 @@ export class PollService {
       // Create user action for CREATED
       await tx.userAction.create({
         data: {
-          userId,
+          userId: user.id,
           pollId: newPoll.pollId,
           type: ActionType.CREATED,
         },
@@ -53,7 +53,7 @@ export class PollService {
 
       // Update user's pollsCreatedCount
       await tx.user.update({
-        where: { id: userId },
+        where: { worldID: createPollDto.worldID },
         data: {
           pollsCreatedCount: {
             increment: 1,
@@ -65,7 +65,7 @@ export class PollService {
     });
   }
 
-  async getPolls(userId: number, query: GetPollsDto) {
+  async getPolls(query: GetPollsDto) {
     const {
       page = 1,
       limit = 10,
@@ -78,10 +78,27 @@ export class PollService {
     const skip = (page - 1) * limit;
     const now = new Date();
     const filters: any = {};
+    let userId: number | undefined;
+
     if (isActive) {
       filters.startDate = { lte: now };
       filters.endDate = { gt: now };
     }
+
+    if ((userCreated || userVoted) && query.worldID) {
+      const user = await this.databaseService.user.findUnique({
+        where: { worldID: query.worldID },
+        select: { id: true },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+      userId = user.id;
+    } else if (userCreated || userVoted) {
+      throw new Error('worldId Not Provided');
+    }
+
     if (userCreated) {
       filters.authorUserId = userId;
     }
