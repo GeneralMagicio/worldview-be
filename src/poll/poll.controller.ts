@@ -39,7 +39,7 @@ export class PollController {
       const poll = await this.pollService.getPollDetails(Number(id));
       return res.status(200).json(poll);
     } catch (error) {
-      if ((error.message = 'Poll Id not found')) {
+      if (error.message === 'Poll Id not found') {
         return res.status(404).json({ message: error.message });
       }
 
