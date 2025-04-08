@@ -77,16 +77,17 @@ export class UserService {
     } else if (dto.filter === 'inactive') {
       filters.poll = { endDate: { lt: now } };
     } else if (dto.filter === 'created') {
-      filters.type = 'CREATED';
+      filters.type = ActionType.CREATED;
     } else if (dto.filter === 'participated') {
-      filters.type = 'VOTED';
+      filters.type = ActionType.VOTED;
     }
     const userActions = await this.databaseService.userAction.findMany({
       where: filters,
-      orderBy: { poll: { endDate: 'desc' } },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         type: true,
+        createdAt: true,
         poll: {
           select: {
             pollId: true,
@@ -109,6 +110,7 @@ export class UserService {
       isActive: action.poll.endDate >= now,
       votersParticipated: action.poll.participantCount,
       authorUserId: action.poll.authorUserId,
+      createdAt: action.createdAt,
     }));
     return { userActions: actions };
   }
