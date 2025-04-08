@@ -37,13 +37,12 @@ export class PollController {
   async getPollDetails(@Param('id') id: number, @Res() res: Response) {
     try {
       const poll = await this.pollService.getPollDetails(Number(id));
-
-      if (!poll) {
-        return res.status(404).json({ message: 'No poll found' });
-      }
-
       return res.status(200).json(poll);
     } catch (error) {
+      if (error.message === 'Poll Id not found') {
+        return res.status(404).json({ message: error.message });
+      }
+
       return res
         .status(500)
         .json({ message: 'Internal server error', error: error.message });

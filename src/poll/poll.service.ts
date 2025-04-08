@@ -120,18 +120,19 @@ export class PollService {
   }
 
   async getPollDetails(id: number) {
-    try {
-      const poll = await this.databaseService.poll.findUnique({
-        where: { pollId: id },
-      });
-      const user = await this.databaseService.user.findUnique({
-        where: { id: poll?.authorUserId },
-      });
-
-      return { user, poll };
-    } catch (error) {
-      throw new Error('Database query failed');
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId: id },
+    });
+    if (!poll) {
+      throw new Error('Poll Id not found');
     }
+    const user = await this.databaseService.user.findUnique({
+      where: { id: poll?.authorUserId },
+    });
+    const now = new Date();
+    const isActive = now >= poll.startDate && now <= poll.endDate;
+
+    return { user, poll, isActive };
   }
 
   async deletePoll(userId: number, pollId: number) {
