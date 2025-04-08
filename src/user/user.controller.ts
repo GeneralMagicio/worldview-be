@@ -29,7 +29,7 @@ export class UserController {
     @Query() query: GetUserDataDto,
   ): Promise<UserDataResponseDto> {
     try {
-      return this.userService.getUserData(query);
+      return await this.userService.getUserData(query);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -42,7 +42,7 @@ export class UserController {
     @Query() query: GetUserActivitiesDto,
   ): Promise<UserActivitiesResponseDto> {
     try {
-      return this.userService.getUserActivities(query);
+      return await this.userService.getUserActivities(query);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -66,7 +66,7 @@ export class UserController {
   @Post('setVote')
   async setVote(@Body() dto: SetVoteDto): Promise<SetVoteResponseDto> {
     try {
-      return this.userService.setVote(dto);
+      return await this.userService.setVote(dto);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';
@@ -77,7 +77,7 @@ export class UserController {
   @Post('editVote')
   async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
     try {
-      return this.userService.editVote(dto);
+      return await this.userService.editVote(dto);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';
