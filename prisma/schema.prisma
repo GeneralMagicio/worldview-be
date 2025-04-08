@@ -33,7 +33,7 @@ model UserAction {
   user      User       @relation(fields: [userId], references: [id])
   poll      Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  updatedAt DateTime   @default(now()) @updatedAt
 }
 
 model Poll {
