@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   EditVoteDto,
@@ -21,30 +28,60 @@ export class UserController {
   async getUserData(
     @Query() query: GetUserDataDto,
   ): Promise<UserDataResponseDto> {
-    return this.userService.getUserData(query);
+    try {
+      return this.userService.getUserData(query);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
   }
 
   @Get('getUserActivities')
   async getUserActivities(
     @Query() query: GetUserActivitiesDto,
   ): Promise<UserActivitiesResponseDto> {
-    return this.userService.getUserActivities(query);
+    try {
+      return this.userService.getUserActivities(query);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
   }
 
   @Post('getUserVotes')
   async getUserVotes(
     @Body() body: GetUserVotesDto,
   ): Promise<UserVotesResponseDto> {
-    return this.userService.getUserVotes(body);
+    try {
+      return await this.userService.getUserVotes(body);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
   }
 
   @Post('setVote')
   async setVote(@Body() dto: SetVoteDto): Promise<SetVoteResponseDto> {
-    return this.userService.setVote(dto);
+    try {
+      return this.userService.setVote(dto);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
   }
 
   @Post('editVote')
   async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
-    return this.userService.editVote(dto);
+    try {
+      return this.userService.editVote(dto);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
   }
 }
