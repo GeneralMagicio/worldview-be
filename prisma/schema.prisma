@@ -26,12 +26,14 @@ model User {
 }
 
 model UserAction {
-  id     Int        @id @default(autoincrement())
-  userId Int
-  pollId Int
-  type   ActionType
-  user   User       @relation(fields: [userId], references: [id])
-  poll   Poll       @relation(fields: [pollId], references: [pollId],onDelete: Cascade)
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  pollId    Int
+  type      ActionType
+  user      User       @relation(fields: [userId], references: [id])
+  poll      Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Poll {
@@ -58,9 +60,9 @@ model Vote {
   pollId             Int
   votingPower        Int
   weightDistribution Json
-  proof             String
-  user             User     @relation(fields: [userId], references: [id])
-  poll             Poll     @relation(fields: [pollId], references: [pollId],onDelete: Cascade)
+  proof              String
+  user               User   @relation(fields: [userId], references: [id])
+  poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
 }
 
 enum ActionType {
