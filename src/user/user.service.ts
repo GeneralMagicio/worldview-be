@@ -35,19 +35,28 @@ export class UserService {
   async getUserData(dto: GetUserDataDto): Promise<UserDataResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
-      select: {
-        pollsCreatedCount: true,
-        pollsParticipatedCount: true,
-        worldID: true,
-      },
+      select: { id: true, worldID: true },
     });
     if (!user) {
       throw new Error('User not found');
     }
+    const pollsCreated = await this.databaseService.userAction.count({
+      where: {
+        userId: user.id,
+        type: ActionType.CREATED,
+      },
+    });
+    const pollsParticipated = await this.databaseService.userAction.count({
+      where: {
+        userId: user.id,
+        type: ActionType.VOTED,
+      },
+    });
     return {
-      pollsCreated: user.pollsCreatedCount,
-      pollsParticipated: user.pollsParticipatedCount,
+      pollsCreated,
+      pollsParticipated,
       worldID: user.worldID,
+      worldProfilePic: null,
     };
   }
 
