@@ -85,6 +85,9 @@ export class PollService {
       filters.endDate = { gt: now };
     }
 
+    if (isActive === false) {
+      filters.OR = [{ startDate: { gt: now } }, { endDate: { lte: now } }];
+    }
     if ((userCreated || userVoted) && query.worldID) {
       const user = await this.databaseService.user.findUnique({
         where: { worldID: query.worldID },
