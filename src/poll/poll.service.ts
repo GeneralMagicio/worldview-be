@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { CreatePollDto, GetPollsDto } from './Poll.dto';
+import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
@@ -152,7 +152,16 @@ export class PollService {
     return { user, poll, isActive };
   }
 
-  async deletePoll(userId: number, pollId: number) {
+  async deletePoll(pollId: number, query: DeletePollDto) {
+    const user = await this.databaseService.user.findUnique({
+      where: { worldID: query.worldID },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId },
     });
@@ -160,7 +169,7 @@ export class PollService {
     if (!poll) {
       throw new Error('Poll not found');
     }
-    if (poll.authorUserId !== userId) {
+    if (poll.authorUserId !== user.id) {
       throw new Error('User Not Authorized');
     }
 

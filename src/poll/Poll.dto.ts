@@ -86,3 +86,9 @@ export class GetPollsDto {
   @IsEnum(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
 }
+
+export class DeletePollDto {
+  @IsString()
+  @IsNotEmpty()
+  worldID: string;
+}
