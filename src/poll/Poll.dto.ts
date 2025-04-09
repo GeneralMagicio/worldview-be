@@ -45,6 +45,7 @@ export class CreatePollDto {
 
 export class GetPollsDto {
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   page?: number = 1;

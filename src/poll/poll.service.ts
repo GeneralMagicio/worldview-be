@@ -82,6 +82,10 @@ export class PollService {
       filters.startDate = { lte: now };
       filters.endDate = { gt: now };
     }
+
+    if (isActive === false) {
+      filters.OR = [{ startDate: { gt: now } }, { endDate: { lte: now } }];
+    }
     if (userCreated) {
       filters.authorUserId = userId;
     }
