@@ -6,17 +6,24 @@ import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
 interface IRequestPayload {
   payload: MiniAppWalletAuthSuccessPayload;
 }
+
+function isHttps(req: Request) {
+  return (
+    req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+  );
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('nonce')
-  async generateNonce(@Res() res: Response): Promise<any> {
+  generateNonce(@Req() req: Request, @Res() res: Response) {
     const nonce = this.authService.generateNonce();
     res.cookie('siwe', nonce, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production' || isHttps(req),
+      sameSite: 'none',
       maxAge: 2 * 60 * 1000, //2 minutes
     });
 
@@ -45,6 +52,7 @@ export class AuthController {
       );
       return res.status(200).json({ isValid: validMessage });
     } catch (error: any) {
+      console.log('Error verifying payload:', error);
       return res
         .status(400)
         .json({ status: 'error', isValid: false, message: error.message });

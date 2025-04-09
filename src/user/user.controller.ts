@@ -5,9 +5,13 @@ import {
   Get,
   Post,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
+  CreateUserDto,
+  CreateUserResponseDto,
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
@@ -78,6 +82,17 @@ export class UserController {
   async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
     try {
       return await this.userService.editVote(dto);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      throw new BadRequestException(errorMessage);
+    }
+  }
+
+  @Post('createUser')
+  async createUser(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
+    try {
+      return await this.userService.createUser(dto);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';

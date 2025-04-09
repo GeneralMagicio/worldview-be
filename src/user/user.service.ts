@@ -12,6 +12,8 @@ import {
   SetVoteResponseDto,
   EditVoteDto,
   EditVoteResponseDto,
+  CreateUserDto,
+  CreateUserResponseDto,
 } from './user.dto';
 import { ActionType } from '@prisma/client';
 
@@ -232,6 +234,33 @@ export class UserService {
     }
     return {
       actionId: userAction.id,
+    };
+  }
+
+  async createUser(dto: CreateUserDto): Promise<CreateUserResponseDto> {
+    const existingUser = await this.databaseService.user.findUnique({
+      where: { worldID: dto.worldID },
+    });
+    if (existingUser) {
+      return {
+        userId: existingUser?.id,
+      };
+    }
+
+    const newUser = await this.databaseService.user.create({
+      data: {
+        name: dto.name,
+        worldID: dto.worldID,
+        profilePicture: dto.profilePicture || null,
+      },
+    });
+
+    if (!newUser) {
+      throw new Error('User not created');
+    }
+
+    return {
+      userId: newUser.id,
     };
   }
 }

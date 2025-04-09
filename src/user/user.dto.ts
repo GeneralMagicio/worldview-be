@@ -1,3 +1,5 @@
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
 export class GetUserDataDto {
   worldID: string;
 }
@@ -60,4 +62,22 @@ export class EditVoteDto {
 
 export class EditVoteResponseDto {
   actionId: number;
+}
+
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  worldID: string;
+
+  @IsString()
+  @IsOptional()
+  profilePicture?: string;
+}
+
+export class CreateUserResponseDto {
+  userId: number;
 }
