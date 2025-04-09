@@ -14,6 +14,10 @@ import {
 export class CreatePollDto {
   @IsString()
   @IsNotEmpty()
+  worldID: string;
+
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @IsString()
@@ -44,6 +48,10 @@ export class CreatePollDto {
 }
 
 export class GetPollsDto {
+  @IsString()
+  @IsOptional()
+  worldID?: string;
+
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -77,4 +85,10 @@ export class GetPollsDto {
   @IsOptional()
   @IsEnum(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
+}
+
+export class DeletePollDto {
+  @IsString()
+  @IsNotEmpty()
+  worldID: string;
 }
