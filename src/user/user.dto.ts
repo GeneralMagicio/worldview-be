@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ActionType } from '@prisma/client';
 
 export class GetUserDataDto {
   worldID: string;
@@ -18,13 +25,13 @@ export class GetUserActivitiesDto {
 
 export class UserActionDto {
   id: number;
-  type: 'created' | 'voted';
+  type: ActionType;
   pollId: number;
   pollTitle: string;
   pollDescription: string;
   endDate: Date;
   votersParticipated: number;
-  authorUserId: number;
+  authorWorldId: string;
   createdAt: Date;
 }
 
@@ -44,8 +51,16 @@ export class UserVotesResponseDto {
 }
 
 export class SetVoteDto {
+  @IsNotEmpty()
+  @IsNumber()
   pollId: number;
+
+  @IsNotEmpty()
+  @IsString()
   worldID: string;
+
+  @IsNotEmpty()
+  @IsObject()
   weightDistribution: Record<string, number>;
 }
 
