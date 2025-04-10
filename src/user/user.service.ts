@@ -12,6 +12,8 @@ import {
   SetVoteResponseDto,
   EditVoteDto,
   EditVoteResponseDto,
+  CreateUserDto,
+  CreateUserResponseDto,
 } from './user.dto';
 import { ActionType } from '@prisma/client';
 
@@ -35,19 +37,28 @@ export class UserService {
   async getUserData(dto: GetUserDataDto): Promise<UserDataResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
-      select: {
-        pollsCreatedCount: true,
-        pollsParticipatedCount: true,
-        worldID: true,
-      },
+      select: { id: true, worldID: true },
     });
     if (!user) {
       throw new Error('User not found');
     }
+    const pollsCreated = await this.databaseService.userAction.count({
+      where: {
+        userId: user.id,
+        type: ActionType.CREATED,
+      },
+    });
+    const pollsParticipated = await this.databaseService.userAction.count({
+      where: {
+        userId: user.id,
+        type: ActionType.VOTED,
+      },
+    });
     return {
-      pollsCreated: user.pollsCreatedCount,
-      pollsParticipated: user.pollsParticipatedCount,
+      pollsCreated,
+      pollsParticipated,
       worldID: user.worldID,
+      worldProfilePic: null,
     };
   }
 
@@ -68,39 +79,52 @@ export class UserService {
     } else if (dto.filter === 'inactive') {
       filters.poll = { endDate: { lt: now } };
     } else if (dto.filter === 'created') {
-      filters.type = 'CREATED';
+      filters.type = ActionType.CREATED;
     } else if (dto.filter === 'participated') {
-      filters.type = 'VOTED';
+      filters.type = ActionType.VOTED;
     }
     const userActions = await this.databaseService.userAction.findMany({
       where: filters,
-      orderBy: { poll: { endDate: 'desc' } },
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         type: true,
+        createdAt: true,
         poll: {
           select: {
             pollId: true,
             title: true,
             description: true,
             endDate: true,
-            participantCount: true,
             authorUserId: true,
           },
         },
       },
     });
-    const actions: UserActionDto[] = userActions.map((action) => ({
-      id: action.id,
-      type: action.type.toLowerCase() as 'created' | 'voted',
-      pollId: action.poll.pollId,
-      pollTitle: action.poll.title,
-      pollDescription: action.poll.description ?? '',
-      endDate: action.poll.endDate,
-      isActive: action.poll.endDate >= now,
-      votersParticipated: action.poll.participantCount,
-      authorUserId: action.poll.authorUserId,
-    }));
+    const actions: UserActionDto[] = await Promise.all(
+      // TODO: it's a temporary work around, should add count to Poll and User and authorWorldId to UserAction later
+      userActions.map(async (action) => {
+        const participantCount = await this.databaseService.userAction.count({
+          where: { pollId: action.poll.pollId, type: ActionType.VOTED },
+        });
+        const authorWorldId = await this.databaseService.user.findUnique({
+          where: { id: action.poll.authorUserId },
+          select: { worldID: true },
+        });
+        return {
+          id: action.id,
+          type: action.type,
+          pollId: action.poll.pollId,
+          pollTitle: action.poll.title,
+          pollDescription: action.poll.description ?? '',
+          endDate: action.poll.endDate,
+          isActive: action.poll.endDate >= now,
+          votersParticipated: participantCount,
+          authorWorldId: authorWorldId?.worldID || '',
+          createdAt: action.createdAt,
+        };
+      }),
+    );
     return { userActions: actions };
   }
 
@@ -221,6 +245,33 @@ export class UserService {
     }
     return {
       actionId: userAction.id,
+    };
+  }
+
+  async createUser(dto: CreateUserDto): Promise<CreateUserResponseDto> {
+    const existingUser = await this.databaseService.user.findUnique({
+      where: { worldID: dto.worldID },
+    });
+    if (existingUser) {
+      return {
+        userId: existingUser?.id,
+      };
+    }
+
+    const newUser = await this.databaseService.user.create({
+      data: {
+        name: dto.name,
+        worldID: dto.worldID,
+        profilePicture: dto.profilePicture || null,
+      },
+    });
+
+    if (!newUser) {
+      throw new Error('User not created');
+    }
+
+    return {
+      userId: newUser.id,
     };
   }
 }
