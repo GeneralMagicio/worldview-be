@@ -96,24 +96,35 @@ export class UserService {
             title: true,
             description: true,
             endDate: true,
-            participantCount: true,
             authorUserId: true,
           },
         },
       },
     });
-    const actions: UserActionDto[] = userActions.map((action) => ({
-      id: action.id,
-      type: action.type.toLowerCase() as 'created' | 'voted',
-      pollId: action.poll.pollId,
-      pollTitle: action.poll.title,
-      pollDescription: action.poll.description ?? '',
-      endDate: action.poll.endDate,
-      isActive: action.poll.endDate >= now,
-      votersParticipated: action.poll.participantCount,
-      authorUserId: action.poll.authorUserId,
-      createdAt: action.createdAt,
-    }));
+    const actions: UserActionDto[] = await Promise.all(
+      // TODO: it's a temporary work around, should add count to Poll and User and authorWorldId to UserAction later
+      userActions.map(async (action) => {
+        const participantCount = await this.databaseService.userAction.count({
+          where: { pollId: action.poll.pollId, type: ActionType.VOTED },
+        });
+        const authorWorldId = await this.databaseService.user.findUnique({
+          where: { id: action.poll.authorUserId },
+          select: { worldID: true },
+        });
+        return {
+          id: action.id,
+          type: action.type,
+          pollId: action.poll.pollId,
+          pollTitle: action.poll.title,
+          pollDescription: action.poll.description ?? '',
+          endDate: action.poll.endDate,
+          isActive: action.poll.endDate >= now,
+          votersParticipated: participantCount,
+          authorWorldId: authorWorldId?.worldID || '',
+          createdAt: action.createdAt,
+        };
+      }),
+    );
     return { userActions: actions };
   }
 
