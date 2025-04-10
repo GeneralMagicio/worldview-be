@@ -5,7 +5,8 @@ import {
   MiniAppWalletAuthSuccessPayload,
   ISuccessResult,
 } from '@worldcoin/minikit-js';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService } from './jwt.service';
+import { Public } from './jwt-auth.guard';
 
 interface IRequestPayload {
   walletPayload: MiniAppWalletAuthSuccessPayload;
@@ -26,6 +27,7 @@ export class AuthController {
     private readonly jwtService: JwtService,
   ) {}
 
+  @Public()
   @Get('nonce')
   generateNonce(@Req() req: Request, @Res() res: Response) {
     const nonce = this.authService.generateNonce();
@@ -39,6 +41,7 @@ export class AuthController {
     return res.json({ nonce });
   }
 
+  @Public()
   @Post('verify-world-id')
   async verifyPayload(
     @Req() _req: Request,
@@ -70,17 +73,11 @@ export class AuthController {
         '',
       );
 
-      const token = this.jwtService.sign(
-        {
-          userId: user.id,
-          worldID: worldIdProof.nullifier_hash,
-          address: walletPayload.address,
-        },
-        {
-          expiresIn: '7d',
-          issuer: 'worldview',
-        },
-      );
+      const token = this.jwtService.sign({
+        userId: user.id,
+        worldID: worldIdProof?.nullifier_hash,
+        address: walletPayload?.address,
+      });
 
       return res.status(200).json({ isValid: true, token });
     } catch (error) {
