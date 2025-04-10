@@ -231,7 +231,7 @@ export class UserService {
       select: {
         userId: true,
         poll: {
-          select: { endDate: true },
+          select: { endDate: true, options: true },
         },
       },
     });
@@ -243,6 +243,24 @@ export class UserService {
     }
     if (vote.userId !== dto.userId) {
       throw new Error('You are not authorized to edit this vote');
+    }
+    const dtoWeightKeys = Object.keys(dto.weightDistribution);
+    const areWeightKeysMatching =
+      dtoWeightKeys.length === vote.poll.options.length &&
+      dtoWeightKeys.every((key) => vote.poll.options.includes(key));
+    if (!areWeightKeysMatching) {
+      throw new Error(
+        'Weight distribution keys do not match poll options exactly',
+      );
+    }
+    const totalWeight = Object.values(dto.weightDistribution).reduce(
+      (acc, weight) => acc + weight,
+      0,
+    );
+    if (totalWeight > votingPower) {
+      throw new Error(
+        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
+      );
     }
     const updatedVote = await this.databaseService.vote.update({
       where: { voteID: dto.voteID },
