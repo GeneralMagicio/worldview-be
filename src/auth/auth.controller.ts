@@ -1,10 +1,16 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
+import {
+  MiniAppWalletAuthSuccessPayload,
+  ISuccessResult,
+} from '@worldcoin/minikit-js';
+import { JwtService } from '@nestjs/jwt';
 
 interface IRequestPayload {
-  payload: MiniAppWalletAuthSuccessPayload;
+  walletPayload: MiniAppWalletAuthSuccessPayload;
+  worldIdProof: ISuccessResult;
+  nonce: string;
 }
 
 function isHttps(req: Request) {
@@ -15,7 +21,10 @@ function isHttps(req: Request) {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Get('nonce')
   generateNonce(@Req() req: Request, @Res() res: Response) {
@@ -30,32 +39,61 @@ export class AuthController {
     return res.json({ nonce });
   }
 
-  @Post('verifyPayload')
+  @Post('verify-world-id')
   async verifyPayload(
-    @Req() req: Request,
+    @Req() _req: Request,
     @Body() body: IRequestPayload,
     @Res() res: Response,
   ) {
-    const { payload } = body;
-    const storedNonce = req.cookies?.siwe;
-    if (!storedNonce) {
-      return res.status(400).json({
-        status: 'error',
-        isValid: false,
-        message: 'No nonce found in cookies',
-      });
-    }
-    try {
-      const validMessage = await this.authService.verifyPayload(
-        payload,
-        storedNonce,
-      );
-      return res.status(200).json({ isValid: validMessage });
-    } catch (error: any) {
-      console.log('Error verifying payload:', error);
+    const { walletPayload, worldIdProof, nonce } = body;
+
+    if (!walletPayload || !worldIdProof || !nonce) {
       return res
         .status(400)
-        .json({ status: 'error', isValid: false, message: error.message });
+        .json({ isValid: false, message: 'Missing required fields' });
+    }
+
+    try {
+      const validMessage = await this.authService.verifyPayload(
+        walletPayload,
+        nonce,
+      );
+
+      if (!validMessage) {
+        return res
+          .status(400)
+          .json({ isValid: false, message: 'Signature verification failed' });
+      }
+
+      const user = await this.authService.createUser(
+        worldIdProof.nullifier_hash,
+        '',
+      );
+
+      const token = this.jwtService.sign(
+        {
+          userId: user.id,
+          worldID: worldIdProof.nullifier_hash,
+          address: walletPayload.address,
+        },
+        {
+          expiresIn: '7d',
+          issuer: 'worldview',
+        },
+      );
+
+      return res.status(200).json({ isValid: true, token });
+    } catch (error) {
+      console.log('Error verifying payload:', error);
+      if (error instanceof Error) {
+        return res
+          .status(400)
+          .json({ status: 'error', isValid: false, message: error.message });
+      } else {
+        return res
+          .status(400)
+          .json({ status: 'error', isValid: false, message: 'Unknown error' });
+      }
     }
   }
 }

@@ -31,7 +31,7 @@ model UserAction {
   pollId Int
   type   ActionType
   user   User       @relation(fields: [userId], references: [id])
-  poll   Poll       @relation(fields: [pollId], references: [pollId],onDelete: Cascade)
+  poll   Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
 }
 
 model Poll {
@@ -58,9 +58,9 @@ model Vote {
   pollId             Int
   votingPower        Int
   weightDistribution Json
-  proof             String
-  user             User     @relation(fields: [userId], references: [id])
-  poll             Poll     @relation(fields: [pollId], references: [pollId],onDelete: Cascade)
+  proof              String
+  user               User   @relation(fields: [userId], references: [id])
+  poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
 }
 
 enum ActionType {
