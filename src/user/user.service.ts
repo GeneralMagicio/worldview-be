@@ -176,6 +176,24 @@ export class UserService {
     if (!poll || poll.endDate < new Date()) {
       throw new Error('Poll is not active or does not exist');
     }
+    const dtoWeightKeys = Object.keys(dto.weightDistribution);
+    const areWeightKeysMatching =
+      dtoWeightKeys.length === poll.options.length &&
+      dtoWeightKeys.every((key) => poll.options.includes(key));
+    if (!areWeightKeysMatching) {
+      throw new Error(
+        'Weight distribution keys do not match poll options exactly',
+      );
+    }
+    const totalWeight = Object.values(dto.weightDistribution).reduce(
+      (acc, weight) => acc + weight,
+      0,
+    );
+    if (totalWeight > votingPower) {
+      throw new Error(
+        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
+      );
+    }
     const existingVote = await this.databaseService.vote.findFirst({
       where: {
         pollId: dto.pollId,
@@ -191,7 +209,7 @@ export class UserService {
         pollId: dto.pollId,
         votingPower,
         weightDistribution: dto.weightDistribution,
-        proof: '', // TODO implement Bandada proof later
+        proof: '', // Implement Bandada proof in next phase
       },
     });
     const action = await this.databaseService.userAction.create({
