@@ -1,3 +1,12 @@
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { ActionType } from '@prisma/client';
+
 export class GetUserDataDto {
   worldID: string;
 }
@@ -6,6 +15,7 @@ export class UserDataResponseDto {
   pollsCreated: number;
   pollsParticipated: number;
   worldID: string;
+  worldProfilePic?: string | null;
 }
 
 export class GetUserActivitiesDto {
@@ -15,13 +25,14 @@ export class GetUserActivitiesDto {
 
 export class UserActionDto {
   id: number;
-  type: 'created' | 'voted';
+  type: ActionType;
   pollId: number;
   pollTitle: string;
   pollDescription: string;
   endDate: Date;
   votersParticipated: number;
-  authorUserId: number;
+  authorWorldId: string;
+  createdAt: Date;
 }
 
 export class UserActivitiesResponseDto {
@@ -40,8 +51,16 @@ export class UserVotesResponseDto {
 }
 
 export class SetVoteDto {
+  @IsNotEmpty()
+  @IsNumber()
   pollId: number;
+
+  @IsNotEmpty()
+  @IsString()
   worldID: string;
+
+  @IsNotEmpty()
+  @IsObject()
   weightDistribution: Record<string, number>;
 }
 
@@ -58,4 +77,22 @@ export class EditVoteDto {
 
 export class EditVoteResponseDto {
   actionId: number;
+}
+
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  worldID: string;
+
+  @IsString()
+  @IsOptional()
+  profilePicture?: string;
+}
+
+export class CreateUserResponseDto {
+  userId: number;
 }
