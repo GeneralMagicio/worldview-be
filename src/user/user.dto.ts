@@ -156,8 +156,8 @@ export class SetVoteResponseDto {
 
 export class EditVoteDto {
   @IsNotEmpty()
-  @IsNumber()
-  userId: number;
+  @IsString()
+  worldID: string;
 
   @IsNotEmpty()
   @IsString()
