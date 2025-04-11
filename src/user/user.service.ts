@@ -185,6 +185,12 @@ export class UserService {
         'Weight distribution keys do not match poll options exactly',
       );
     }
+    const isPositiveWeight = Object.values(dto.weightDistribution).every(
+      (weight) => weight >= 0,
+    );
+    if (!isPositiveWeight) {
+      throw new Error('Weight distribution values must be positive');
+    }
     const totalWeight = Object.values(dto.weightDistribution).reduce(
       (acc, weight) => acc + weight,
       0,
@@ -241,7 +247,12 @@ export class UserService {
     if (vote.poll.endDate < new Date()) {
       throw new Error('Cannot edit vote for an inactive poll');
     }
-    if (vote.userId !== dto.userId) {
+    // TODO: should add worldID to Vote later
+    const user = await this.databaseService.user.findUnique({
+      where: { id: vote.userId },
+      select: { worldID: true },
+    });
+    if (user?.worldID !== dto.worldID) {
       throw new Error('You are not authorized to edit this vote');
     }
     const dtoWeightKeys = Object.keys(dto.weightDistribution);
@@ -252,6 +263,12 @@ export class UserService {
       throw new Error(
         'Weight distribution keys do not match poll options exactly',
       );
+    }
+    const isPositiveWeight = Object.values(dto.weightDistribution).every(
+      (weight) => weight >= 0,
+    );
+    if (!isPositiveWeight) {
+      throw new Error('Weight distribution values must be positive');
     }
     const totalWeight = Object.values(dto.weightDistribution).reduce(
       (acc, weight) => acc + weight,
