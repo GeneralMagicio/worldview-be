@@ -1,27 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
-  GetUserActivitiesDto,
-  GetUserDataDto,
-  UserDataResponseDto,
-  UserActivitiesResponseDto,
-  UserActionDto,
-  GetUserVotesDto,
-  UserVotesResponseDto,
-  SetVoteDto,
-  SetVoteResponseDto,
-  EditVoteDto,
-  EditVoteResponseDto,
   CreateUserDto,
   CreateUserResponseDto,
+  EditVoteDto,
+  EditVoteResponseDto,
+  GetUserActivitiesDto,
+  GetUserDataDto,
+  GetUserVotesDto,
+  SetVoteDto,
+  SetVoteResponseDto,
+  UserActionDto,
+  UserActivitiesResponseDto,
+  UserDataResponseDto,
+  UserVotesResponseDto,
 } from './user.dto';
 import { ActionType } from '@prisma/client';
-
-const votingPower = 100; // Set as a constant for now
+import { VOTING_POWER } from '../common/constants';
+import {
+  CreateUserException,
+  DuplicateVoteException,
+  PollNotFoundException,
+  UnauthorizedActionException,
+  UserActionNotFoundException,
+  UserNotFoundException,
+  VoteNotFoundException,
+  VoteOptionException,
+} from '../common/exceptions';
 
 type UserActionFilters = {
   userId: number;
-  type?: 'CREATED' | 'VOTED';
+  type?: ActionType;
   poll?: {
     endDate?: {
       gte?: Date;
@@ -34,13 +43,45 @@ type UserActionFilters = {
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) {}
 
+  private validateWeightDistribution(
+    weightDistribution: Record<string, number>,
+    pollOptions: string[],
+  ): void {
+    const weightKeys = Object.keys(weightDistribution);
+    const areWeightKeysMatching =
+      weightKeys.length === pollOptions.length &&
+      weightKeys.every((key) => pollOptions.includes(key));
+    if (!areWeightKeysMatching) {
+      throw new VoteOptionException(
+        'Weight distribution keys do not match poll options exactly',
+      );
+    }
+    const isPositiveWeight = Object.values(weightDistribution).every(
+      (weight) => weight >= 0,
+    );
+    if (!isPositiveWeight) {
+      throw new VoteOptionException(
+        'Weight distribution values must be positive',
+      );
+    }
+    const totalWeight = Object.values(weightDistribution).reduce(
+      (acc, weight) => acc + weight,
+      0,
+    );
+    if (totalWeight > VOTING_POWER) {
+      throw new VoteOptionException(
+        `Total weight distribution must be equal or lower than the voting power of ${VOTING_POWER}`,
+      );
+    }
+  }
+
   async getUserData(dto: GetUserDataDto): Promise<UserDataResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
       select: { id: true, worldID: true },
     });
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundException();
     }
     const pollsCreated = await this.databaseService.userAction.count({
       where: {
@@ -70,7 +111,7 @@ export class UserService {
       select: { id: true },
     });
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundException();
     }
     const filters: UserActionFilters = { userId: user.id };
     const now = new Date();
@@ -134,14 +175,14 @@ export class UserService {
       select: { id: true },
     });
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundException();
     }
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId: dto.pollId },
       select: { endDate: true, options: true },
     });
     if (!poll || poll.endDate < new Date()) {
-      throw new Error('Poll is not active or does not exist!');
+      throw new PollNotFoundException();
     }
     const votes = await this.databaseService.vote.findMany({
       where: {
@@ -151,7 +192,7 @@ export class UserService {
       select: { votingPower: true, weightDistribution: true },
     });
     if (votes.length === 0) {
-      throw new Error('Vote not found for the given poll and user');
+      throw new VoteNotFoundException();
     }
     const vote = votes[0];
     return {
@@ -167,39 +208,16 @@ export class UserService {
       select: { id: true },
     });
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundException();
     }
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId: dto.pollId },
       select: { endDate: true, options: true },
     });
     if (!poll || poll.endDate < new Date()) {
-      throw new Error('Poll is not active or does not exist');
+      throw new PollNotFoundException();
     }
-    const dtoWeightKeys = Object.keys(dto.weightDistribution);
-    const areWeightKeysMatching =
-      dtoWeightKeys.length === poll.options.length &&
-      dtoWeightKeys.every((key) => poll.options.includes(key));
-    if (!areWeightKeysMatching) {
-      throw new Error(
-        'Weight distribution keys do not match poll options exactly',
-      );
-    }
-    const isPositiveWeight = Object.values(dto.weightDistribution).every(
-      (weight) => weight >= 0,
-    );
-    if (!isPositiveWeight) {
-      throw new Error('Weight distribution values must be positive');
-    }
-    const totalWeight = Object.values(dto.weightDistribution).reduce(
-      (acc, weight) => acc + weight,
-      0,
-    );
-    if (totalWeight > votingPower) {
-      throw new Error(
-        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
-      );
-    }
+    this.validateWeightDistribution(dto.weightDistribution, poll.options);
     const existingVote = await this.databaseService.vote.findFirst({
       where: {
         pollId: dto.pollId,
@@ -207,13 +225,13 @@ export class UserService {
       },
     });
     if (existingVote) {
-      throw new Error('User has already voted in this poll');
+      throw new DuplicateVoteException();
     }
     const vote = await this.databaseService.vote.create({
       data: {
         userId: user.id,
         pollId: dto.pollId,
-        votingPower,
+        votingPower: VOTING_POWER,
         weightDistribution: dto.weightDistribution,
         proof: '', // Implement Bandada proof in next phase
       },
@@ -242,10 +260,10 @@ export class UserService {
       },
     });
     if (!vote) {
-      throw new Error('Vote not found');
+      throw new VoteNotFoundException();
     }
     if (vote.poll.endDate < new Date()) {
-      throw new Error('Cannot edit vote for an inactive poll');
+      throw new PollNotFoundException();
     }
     // TODO: should add worldID to Vote later
     const user = await this.databaseService.user.findUnique({
@@ -253,32 +271,9 @@ export class UserService {
       select: { worldID: true },
     });
     if (user?.worldID !== dto.worldID) {
-      throw new Error('You are not authorized to edit this vote');
+      throw new UnauthorizedActionException();
     }
-    const dtoWeightKeys = Object.keys(dto.weightDistribution);
-    const areWeightKeysMatching =
-      dtoWeightKeys.length === vote.poll.options.length &&
-      dtoWeightKeys.every((key) => vote.poll.options.includes(key));
-    if (!areWeightKeysMatching) {
-      throw new Error(
-        'Weight distribution keys do not match poll options exactly',
-      );
-    }
-    const isPositiveWeight = Object.values(dto.weightDistribution).every(
-      (weight) => weight >= 0,
-    );
-    if (!isPositiveWeight) {
-      throw new Error('Weight distribution values must be positive');
-    }
-    const totalWeight = Object.values(dto.weightDistribution).reduce(
-      (acc, weight) => acc + weight,
-      0,
-    );
-    if (totalWeight > votingPower) {
-      throw new Error(
-        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
-      );
-    }
+    this.validateWeightDistribution(dto.weightDistribution, vote.poll.options);
     const updatedVote = await this.databaseService.vote.update({
       where: { voteID: dto.voteID },
       data: {
@@ -294,7 +289,7 @@ export class UserService {
       select: { id: true },
     });
     if (!userAction) {
-      throw new Error('User action not found');
+      throw new UserActionNotFoundException();
     }
     return {
       actionId: userAction.id,
@@ -310,7 +305,6 @@ export class UserService {
         userId: existingUser?.id,
       };
     }
-
     const newUser = await this.databaseService.user.create({
       data: {
         name: dto.name,
@@ -318,11 +312,9 @@ export class UserService {
         profilePicture: dto.profilePicture || null,
       },
     });
-
     if (!newUser) {
-      throw new Error('User not created');
+      throw new CreateUserException();
     }
-
     return {
       userId: newUser.id,
     };
