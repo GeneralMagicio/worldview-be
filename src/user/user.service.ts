@@ -184,17 +184,16 @@ export class UserService {
     if (!poll || poll.endDate < new Date()) {
       throw new PollNotFoundException();
     }
-    const votes = await this.databaseService.vote.findMany({
+    const vote = await this.databaseService.vote.findFirst({
       where: {
         pollId: dto.pollId,
         userId: user.id,
       },
       select: { votingPower: true, weightDistribution: true },
     });
-    if (votes.length === 0) {
+    if (!vote) {
       throw new VoteNotFoundException();
     }
-    const vote = votes[0];
     return {
       options: poll.options,
       votingPower: vote.votingPower,
@@ -227,26 +226,28 @@ export class UserService {
     if (existingVote) {
       throw new DuplicateVoteException();
     }
-    const vote = await this.databaseService.vote.create({
-      data: {
-        userId: user.id,
-        pollId: dto.pollId,
-        votingPower: VOTING_POWER,
-        weightDistribution: dto.weightDistribution,
-        proof: '', // Implement Bandada proof in next phase
-      },
+    return this.databaseService.$transaction(async (prisma) => {
+      const vote = await prisma.vote.create({
+        data: {
+          userId: user.id,
+          pollId: dto.pollId,
+          votingPower: VOTING_POWER,
+          weightDistribution: dto.weightDistribution,
+          proof: '', // Implement Bandada proof in next phase
+        },
+      });
+      const action = await prisma.userAction.create({
+        data: {
+          userId: user.id,
+          pollId: dto.pollId,
+          type: ActionType.VOTED,
+        },
+      });
+      return {
+        voteID: vote.voteID,
+        actionId: action.id,
+      };
     });
-    const action = await this.databaseService.userAction.create({
-      data: {
-        userId: user.id,
-        pollId: dto.pollId,
-        type: ActionType.VOTED,
-      },
-    });
-    return {
-      voteID: vote.voteID,
-      actionId: action.id,
-    };
   }
 
   async editVote(dto: EditVoteDto): Promise<EditVoteResponseDto> {
@@ -274,49 +275,54 @@ export class UserService {
       throw new UnauthorizedActionException();
     }
     this.validateWeightDistribution(dto.weightDistribution, vote.poll.options);
-    const updatedVote = await this.databaseService.vote.update({
-      where: { voteID: dto.voteID },
-      data: {
-        weightDistribution: dto.weightDistribution,
-      },
+    return this.databaseService.$transaction(async (prisma) => {
+      const updatedVote = await prisma.vote.update({
+        where: { voteID: dto.voteID },
+        data: {
+          weightDistribution: dto.weightDistribution,
+        },
+      });
+      const userAction = await prisma.userAction.findFirst({
+        where: {
+          userId: vote.userId,
+          pollId: updatedVote.pollId,
+          type: ActionType.VOTED,
+        },
+        select: { id: true },
+      });
+      if (!userAction) {
+        throw new UserActionNotFoundException();
+      }
+      return {
+        actionId: userAction.id,
+      };
     });
-    const userAction = await this.databaseService.userAction.findFirst({
-      where: {
-        userId: vote.userId,
-        pollId: updatedVote.pollId,
-        type: ActionType.VOTED,
-      },
-      select: { id: true },
-    });
-    if (!userAction) {
-      throw new UserActionNotFoundException();
-    }
-    return {
-      actionId: userAction.id,
-    };
   }
 
   async createUser(dto: CreateUserDto): Promise<CreateUserResponseDto> {
-    const existingUser = await this.databaseService.user.findUnique({
-      where: { worldID: dto.worldID },
-    });
-    if (existingUser) {
+    return this.databaseService.$transaction(async (prisma) => {
+      const existingUser = await prisma.user.findUnique({
+        where: { worldID: dto.worldID },
+        select: { id: true },
+      });
+      if (existingUser) {
+        return {
+          userId: existingUser.id,
+        };
+      }
+      const newUser = await prisma.user.create({
+        data: {
+          name: dto.name,
+          worldID: dto.worldID,
+          profilePicture: dto.profilePicture || null,
+        },
+      });
+      if (!newUser) {
+        throw new CreateUserException();
+      }
       return {
-        userId: existingUser?.id,
+        userId: newUser.id,
       };
-    }
-    const newUser = await this.databaseService.user.create({
-      data: {
-        name: dto.name,
-        worldID: dto.worldID,
-        profilePicture: dto.profilePicture || null,
-      },
     });
-    if (!newUser) {
-      throw new CreateUserException();
-    }
-    return {
-      userId: newUser.id,
-    };
   }
 }
