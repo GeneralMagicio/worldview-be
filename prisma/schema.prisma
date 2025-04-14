@@ -60,6 +60,7 @@ model Vote {
   pollId             Int
   votingPower        Int
   weightDistribution Json
+  quadraticWeights   Json? // DO NOT INSERT INTO THIS, THIS IS A GENERATED COLUMN
   proof              String
   user               User   @relation(fields: [userId], references: [id])
   poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)

@@ -5,6 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from './auth/jwt.service';
+import { HttpExceptionFilter } from './common/http-exception.filter';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -55,6 +57,8 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector, app.get(JwtService)));
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.use(cookieParser());
