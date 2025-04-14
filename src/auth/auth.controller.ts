@@ -43,7 +43,7 @@ export class AuthController {
 
   @Public()
   @Post('verify-world-id')
-  async verifyPayload(
+  async verifyWorldId(
     @Req() _req: Request,
     @Body() body: IRequestPayload,
     @Res() res: Response,
