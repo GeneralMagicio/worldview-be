@@ -32,26 +32,19 @@ export class AuthService {
   }
 
   async createUser(worldID: string, name: string) {
-    let user = await this.databaseService.user.findUnique({
-      where: { worldID },
-    });
-
-    if (!user) {
-      user = await this.databaseService.user.create({
-        data: {
-          worldID,
-          name,
-        },
-      });
-    } else {
-      await this.databaseService.user.update({
+    try {
+      return await this.databaseService.user.upsert({
         where: { worldID },
-        data: {
-          name,
-        },
+        update: { name },
+        create: { worldID, name },
       });
+    } catch (error) {
+      console.error('Error creating/updating user:', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to create/update user: ${error.message}`);
+      } else {
+        throw new Error('Failed to create/update user');
+      }
     }
-
-    return user;
   }
 }
