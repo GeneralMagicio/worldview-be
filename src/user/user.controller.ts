@@ -54,12 +54,12 @@ export class UserController {
     }
   }
 
-  @Post('getUserVotes')
+  @Get('getUserVotes')
   async getUserVotes(
-    @Body() body: GetUserVotesDto,
+    @Query() query: GetUserVotesDto,
   ): Promise<UserVotesResponseDto> {
     try {
-      return await this.userService.getUserVotes(body);
+      return await this.userService.getUserVotes(query);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unexpected error occurred';
