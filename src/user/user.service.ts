@@ -176,6 +176,30 @@ export class UserService {
     if (!poll || poll.endDate < new Date()) {
       throw new Error('Poll is not active or does not exist');
     }
+    const dtoWeightKeys = Object.keys(dto.weightDistribution);
+    const areWeightKeysMatching =
+      dtoWeightKeys.length === poll.options.length &&
+      dtoWeightKeys.every((key) => poll.options.includes(key));
+    if (!areWeightKeysMatching) {
+      throw new Error(
+        'Weight distribution keys do not match poll options exactly',
+      );
+    }
+    const isPositiveWeight = Object.values(dto.weightDistribution).every(
+      (weight) => weight >= 0,
+    );
+    if (!isPositiveWeight) {
+      throw new Error('Weight distribution values must be positive');
+    }
+    const totalWeight = Object.values(dto.weightDistribution).reduce(
+      (acc, weight) => acc + weight,
+      0,
+    );
+    if (totalWeight > votingPower) {
+      throw new Error(
+        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
+      );
+    }
     const existingVote = await this.databaseService.vote.findFirst({
       where: {
         pollId: dto.pollId,
@@ -191,7 +215,7 @@ export class UserService {
         pollId: dto.pollId,
         votingPower,
         weightDistribution: dto.weightDistribution,
-        proof: '', // TODO implement Bandada proof later
+        proof: '', // Implement Bandada proof in next phase
       },
     });
     const action = await this.databaseService.userAction.create({
@@ -213,7 +237,7 @@ export class UserService {
       select: {
         userId: true,
         poll: {
-          select: { endDate: true },
+          select: { endDate: true, options: true },
         },
       },
     });
@@ -223,8 +247,37 @@ export class UserService {
     if (vote.poll.endDate < new Date()) {
       throw new Error('Cannot edit vote for an inactive poll');
     }
-    if (vote.userId !== dto.userId) {
+    // TODO: should add worldID to Vote later
+    const user = await this.databaseService.user.findUnique({
+      where: { id: vote.userId },
+      select: { worldID: true },
+    });
+    if (user?.worldID !== dto.worldID) {
       throw new Error('You are not authorized to edit this vote');
+    }
+    const dtoWeightKeys = Object.keys(dto.weightDistribution);
+    const areWeightKeysMatching =
+      dtoWeightKeys.length === vote.poll.options.length &&
+      dtoWeightKeys.every((key) => vote.poll.options.includes(key));
+    if (!areWeightKeysMatching) {
+      throw new Error(
+        'Weight distribution keys do not match poll options exactly',
+      );
+    }
+    const isPositiveWeight = Object.values(dto.weightDistribution).every(
+      (weight) => weight >= 0,
+    );
+    if (!isPositiveWeight) {
+      throw new Error('Weight distribution values must be positive');
+    }
+    const totalWeight = Object.values(dto.weightDistribution).reduce(
+      (acc, weight) => acc + weight,
+      0,
+    );
+    if (totalWeight > votingPower) {
+      throw new Error(
+        `Total weight distribution must be equal or lower than the voting power of ${votingPower}`,
+      );
     }
     const updatedVote = await this.databaseService.vote.update({
       where: { voteID: dto.voteID },

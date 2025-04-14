@@ -102,19 +102,31 @@ export class PollService {
       throw new Error('worldId Not Provided');
     }
 
-    if (userCreated) {
-      filters.authorUserId = userId;
-    }
-
-    // Get polls user voted in
-    let votedPollIds: number[] = [];
-    if (userVoted) {
+    if (userCreated && userVoted) {
+      // Get polls user voted in
       const userVotes = await this.databaseService.vote.findMany({
         where: { userId },
         select: { pollId: true },
       });
-      votedPollIds = userVotes.map((v) => v.pollId);
-      filters.pollId = { in: votedPollIds };
+      const votedPollIds = userVotes.map((v) => v.pollId);
+
+      // Use OR condition to get polls where user voted OR user created
+      filters.OR = [{ authorUserId: userId }, { pollId: { in: votedPollIds } }];
+    } else {
+      if (userCreated) {
+        filters.authorUserId = userId;
+      }
+
+      // Get polls user voted in
+      let votedPollIds: number[] = [];
+      if (userVoted) {
+        const userVotes = await this.databaseService.vote.findMany({
+          where: { userId },
+          select: { pollId: true },
+        });
+        votedPollIds = userVotes.map((v) => v.pollId);
+        filters.pollId = { in: votedPollIds };
+      }
     }
 
     // Sorting options
