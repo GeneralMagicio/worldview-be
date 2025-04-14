@@ -1,15 +1,15 @@
 import {
+  IsDate,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  IsEnum,
-  IsDate,
   Validate,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
 } from 'class-validator';
 import { ActionType } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import { IsPositiveInteger, IsRecordStringNumber } from '../common/validators';
 
 export class GetUserDataDto {
   @IsString()
@@ -89,31 +89,14 @@ export class UserActivitiesResponseDto {
 }
 
 export class GetUserVotesDto {
-  @IsNumber()
   @IsNotEmpty()
+  @Validate(IsPositiveInteger)
+  @Transform(({ value }) => parseInt(value, 10))
   pollId: number;
 
   @IsString()
   @IsNotEmpty()
   worldID: string;
-}
-
-@ValidatorConstraint({ name: 'IsRecordStringNumber', async: false })
-export class IsRecordStringNumberConstraint
-  implements ValidatorConstraintInterface
-{
-  validate(value: any): boolean {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return false;
-    }
-    return Object.entries(value).every(
-      ([key, val]) => typeof key === 'string' && typeof val === 'number',
-    );
-  }
-
-  defaultMessage(): string {
-    return 'weightDistribution must be a record with string keys and number values';
-  }
 }
 
 export class UserVotesResponseDto {
@@ -125,14 +108,14 @@ export class UserVotesResponseDto {
   @IsNotEmpty()
   votingPower: number;
 
-  @Validate(IsRecordStringNumberConstraint)
+  @Validate(IsRecordStringNumber)
   @IsOptional()
   weightDistribution?: Record<string, number>;
 }
 
 export class SetVoteDto {
   @IsNotEmpty()
-  @IsNumber()
+  @Validate(IsPositiveInteger)
   pollId: number;
 
   @IsNotEmpty()
@@ -140,7 +123,7 @@ export class SetVoteDto {
   worldID: string;
 
   @IsNotEmpty()
-  @Validate(IsRecordStringNumberConstraint)
+  @Validate(IsRecordStringNumber)
   weightDistribution: Record<string, number>;
 }
 
@@ -164,7 +147,7 @@ export class EditVoteDto {
   voteID: string;
 
   @IsNotEmpty()
-  @Validate(IsRecordStringNumberConstraint)
+  @Validate(IsRecordStringNumber)
   weightDistribution: Record<string, number>;
 }
 

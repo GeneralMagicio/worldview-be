@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
@@ -52,7 +52,19 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      exceptionFactory: (errors) => {
+        const firstError = errors[0];
+        if (!firstError?.constraints) {
+          return new BadRequestException('Validation failed');
+        }
+        const message = Object.values(firstError.constraints)[0];
+        return new BadRequestException(message);
+      },
+    }),
+  );
   app.use(cookieParser());
 
   await app.listen(process.env.PORT ?? 3000);
