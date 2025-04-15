@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
 import { Request, Response } from 'express';
-import { handleError } from '../common/helpers';
 import { AuthService } from './auth.service';
 
 interface IRequestPayload {
@@ -52,14 +51,10 @@ export class AuthController {
         message: 'No nonce found in cookies',
       });
     }
-    try {
-      const validMessage = await this.authService.verifyPayload(
-        payload,
-        storedNonce,
-      );
-      return res.status(200).json({ isValid: validMessage });
-    } catch (error: unknown) {
-      return handleError(error);
-    }
+    const validMessage = await this.authService.verifyPayload(
+      payload,
+      storedNonce,
+    );
+    return res.status(200).json({ isValid: validMessage });
   }
 }
