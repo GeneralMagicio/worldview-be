@@ -1,14 +1,5 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
-import { UserService } from './user.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { handleError } from '../common/helpers';
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -23,6 +14,7 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
@@ -35,9 +27,7 @@ export class UserController {
     try {
       return await this.userService.getUserData(query);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 
@@ -48,9 +38,7 @@ export class UserController {
     try {
       return await this.userService.getUserActivities(query);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 
@@ -61,9 +49,7 @@ export class UserController {
     try {
       return await this.userService.getUserVotes(query);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 
@@ -72,9 +58,7 @@ export class UserController {
     try {
       return await this.userService.setVote(dto);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 
@@ -83,9 +67,7 @@ export class UserController {
     try {
       return await this.userService.editVote(dto);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 
@@ -94,9 +76,7 @@ export class UserController {
     try {
       return await this.userService.createUser(dto);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
+      return handleError(error);
     }
   }
 }

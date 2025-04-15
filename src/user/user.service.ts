@@ -1,4 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { ActionType } from '@prisma/client';
+import { VOTING_POWER } from '../common/constants';
+import {
+  CreateUserException,
+  DuplicateVoteException,
+  PollNotFoundException,
+  UnauthorizedActionException,
+  UserActionNotFoundException,
+  UserNotFoundException,
+  VoteNotFoundException,
+  VoteOptionException,
+} from '../common/exceptions';
 import { DatabaseService } from '../database/database.service';
 import {
   CreateUserDto,
@@ -15,18 +27,6 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
-import { ActionType } from '@prisma/client';
-import { VOTING_POWER } from '../common/constants';
-import {
-  CreateUserException,
-  DuplicateVoteException,
-  PollNotFoundException,
-  UnauthorizedActionException,
-  UserActionNotFoundException,
-  UserNotFoundException,
-  VoteNotFoundException,
-  VoteOptionException,
-} from '../common/exceptions';
 
 type UserActionFilters = {
   userId: number;
@@ -241,6 +241,30 @@ export class UserService {
           userId: user.id,
           pollId: dto.pollId,
           type: ActionType.VOTED,
+        },
+      });
+      const pollsParticipatedCount = await prisma.userAction.count({
+        where: {
+          userId: user.id,
+          type: ActionType.VOTED,
+        },
+      });
+      const participantCount = await prisma.userAction.count({
+        where: {
+          pollId: dto.pollId,
+          type: ActionType.VOTED,
+        },
+      });
+      await prisma.user.update({
+        where: { worldID: dto.worldID },
+        data: {
+          pollsParticipatedCount,
+        },
+      });
+      await prisma.poll.update({
+        where: { pollId: dto.pollId },
+        data: {
+          participantCount,
         },
       });
       return {
