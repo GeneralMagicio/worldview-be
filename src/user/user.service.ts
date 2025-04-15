@@ -243,6 +243,30 @@ export class UserService {
           type: ActionType.VOTED,
         },
       });
+      const pollsParticipatedCount = await prisma.userAction.count({
+        where: {
+          userId: user.id,
+          type: ActionType.VOTED,
+        },
+      });
+      const participantCount = await prisma.userAction.count({
+        where: {
+          pollId: dto.pollId,
+          type: ActionType.VOTED,
+        },
+      });
+      await prisma.user.update({
+        where: { worldID: dto.worldID },
+        data: {
+          pollsParticipatedCount,
+        },
+      });
+      await prisma.poll.update({
+        where: { pollId: dto.pollId },
+        data: {
+          participantCount,
+        },
+      });
       return {
         voteID: vote.voteID,
         actionId: action.id,
