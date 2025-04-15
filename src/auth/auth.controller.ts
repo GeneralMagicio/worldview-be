@@ -1,7 +1,14 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
 import { Request, Response } from 'express';
-import { handleError } from '../common/helpers';
 import { AuthService } from './auth.service';
 
 interface IRequestPayload {
@@ -34,32 +41,20 @@ export class AuthController {
       maxAge: 2 * 60 * 1000, //2 minutes
     });
 
-    return res.json({ nonce });
+    return { nonce };
   }
 
   @Post('verifyPayload')
   async verifyPayload(
     @Req() req: RequestWithCookies,
     @Body() body: IRequestPayload,
-    @Res() res: Response,
   ) {
     const { payload } = body;
     const storedNonce = req.cookies.siwe;
     if (!storedNonce) {
-      return res.status(400).json({
-        status: 'error',
-        isValid: false,
-        message: 'No nonce found in cookies',
-      });
+      throw new BadRequestException('No nonce found in cookies');
     }
-    try {
-      const validMessage = await this.authService.verifyPayload(
-        payload,
-        storedNonce,
-      );
-      return res.status(200).json({ isValid: validMessage });
-    } catch (error: unknown) {
-      return handleError(error);
-    }
+    const isValid = await this.authService.verifyPayload(payload, storedNonce);
+    return { isValid };
   }
 }

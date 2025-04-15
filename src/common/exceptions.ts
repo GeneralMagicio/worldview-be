@@ -26,7 +26,7 @@ export class VoteNotFoundException extends HttpException {
 
 export class DuplicateVoteException extends HttpException {
   constructor(message = 'User has already voted in this poll') {
-    super(message, HttpStatus.CONFLICT);
+    super(message, HttpStatus.BAD_REQUEST);
   }
 }
 
