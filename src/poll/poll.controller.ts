@@ -8,8 +8,6 @@ import {
   Query,
   Req,
   Res,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { handleError } from '../common/helpers';
@@ -21,7 +19,6 @@ export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
-  @UsePipes(ValidationPipe)
   async createPoll(@Body() dto: CreatePollDto) {
     try {
       return await this.pollService.createPoll(dto);
@@ -31,7 +28,6 @@ export class PollController {
   }
 
   @Get()
-  @UsePipes(ValidationPipe)
   async getPolls(
     @Req() req,
     @Query() query: GetPollsDto,
