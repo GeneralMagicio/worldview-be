@@ -1,12 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ActionType } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 import {
   PollNotFoundException,
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions';
+import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
@@ -22,17 +22,13 @@ export class PollService {
     const startDate = new Date(createPollDto.startDate);
     const endDate = new Date(createPollDto.endDate);
     const now = new Date();
-
     if (startDate < now) {
       throw new BadRequestException('Start date cannot be in the past');
     }
-
     if (endDate <= startDate) {
       throw new BadRequestException('End date must be after start date');
     }
-
     return this.databaseService.$transaction(async (tx) => {
-      // Create the poll
       const newPoll = await tx.poll.create({
         data: {
           authorUserId: user.id,
@@ -43,11 +39,9 @@ export class PollService {
           endDate,
           tags: createPollDto.tags || [],
           isAnonymous: createPollDto.isAnonymous || false,
-          voteResults: {}, // Initialize empty vote results
+          voteResults: {},
         },
       });
-
-      // Create user action for CREATED
       await tx.userAction.create({
         data: {
           userId: user.id,
@@ -55,17 +49,18 @@ export class PollService {
           type: ActionType.CREATED,
         },
       });
-
-      // Update user's pollsCreatedCount
+      const pollsCreatedCount = await tx.userAction.count({
+        where: {
+          userId: user.id,
+          type: ActionType.CREATED,
+        },
+      });
       await tx.user.update({
         where: { worldID: createPollDto.worldID },
         data: {
-          pollsCreatedCount: {
-            increment: 1,
-          },
+          pollsCreatedCount,
         },
       });
-
       return newPoll;
     });
   }
@@ -199,8 +194,6 @@ export class PollService {
           pollId,
         },
       });
-
-      // Update user's pollsCreatedCount
       await tx.user.update({
         where: { id: deleted.authorUserId },
         data: {
@@ -209,7 +202,6 @@ export class PollService {
           },
         },
       });
-
       return deleted;
     });
   }
