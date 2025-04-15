@@ -1,11 +1,18 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
-import { Response, Request } from 'express';
-import { AuthService } from './auth.service';
 import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
+import { Request, Response } from 'express';
+import { handleError } from '../common/helpers';
+import { AuthService } from './auth.service';
 
 interface IRequestPayload {
   payload: MiniAppWalletAuthSuccessPayload;
 }
+
+type RequestWithCookies = Request & {
+  cookies: {
+    siwe?: string;
+  };
+};
 
 function isHttps(req: Request) {
   return (
@@ -32,12 +39,12 @@ export class AuthController {
 
   @Post('verifyPayload')
   async verifyPayload(
-    @Req() req: Request,
+    @Req() req: RequestWithCookies,
     @Body() body: IRequestPayload,
     @Res() res: Response,
   ) {
     const { payload } = body;
-    const storedNonce = req.cookies?.siwe;
+    const storedNonce = req.cookies.siwe;
     if (!storedNonce) {
       return res.status(400).json({
         status: 'error',
@@ -51,11 +58,8 @@ export class AuthController {
         storedNonce,
       );
       return res.status(200).json({ isValid: validMessage });
-    } catch (error: any) {
-      console.log('Error verifying payload:', error);
-      return res
-        .status(400)
-        .json({ status: 'error', isValid: false, message: error.message });
+    } catch (error: unknown) {
+      return handleError(error);
     }
   }
 }
