@@ -1,4 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { ActionType } from '@prisma/client';
+import { VOTING_POWER } from '../common/constants';
+import {
+  CreateUserException,
+  DuplicateVoteException,
+  PollNotFoundException,
+  UnauthorizedActionException,
+  UserActionNotFoundException,
+  UserNotFoundException,
+  VoteNotFoundException,
+  VoteOptionException,
+} from '../common/exceptions';
 import { DatabaseService } from '../database/database.service';
 import {
   CreateUserDto,
@@ -15,18 +27,6 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
-import { ActionType } from '@prisma/client';
-import { VOTING_POWER } from '../common/constants';
-import {
-  CreateUserException,
-  DuplicateVoteException,
-  PollNotFoundException,
-  UnauthorizedActionException,
-  UserActionNotFoundException,
-  UserNotFoundException,
-  VoteNotFoundException,
-  VoteOptionException,
-} from '../common/exceptions';
 
 type UserActionFilters = {
   userId: number;
