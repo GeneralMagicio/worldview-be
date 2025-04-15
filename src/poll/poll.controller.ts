@@ -6,10 +6,7 @@ import {
   Param,
   Post,
   Query,
-  Req,
-  Res,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
 
@@ -23,28 +20,18 @@ export class PollController {
   }
 
   @Get()
-  async getPolls(
-    @Req() req,
-    @Query() query: GetPollsDto,
-    @Res() res: Response,
-  ) {
-    const polls = await this.pollService.getPolls(query);
-    return res.status(200).json(polls);
+  async getPolls(@Query() query: GetPollsDto) {
+    return await this.pollService.getPolls(query);
   }
 
   @Get(':id')
-  async getPollDetails(@Param('id') id: number, @Res() res: Response) {
-    const poll = await this.pollService.getPollDetails(Number(id));
-    return res.status(200).json(poll);
+  async getPollDetails(@Param('id') id: number) {
+    return await this.pollService.getPollDetails(Number(id));
   }
 
   @Delete(':id')
-  async deletePoll(
-    @Param('id') id: number,
-    @Body() query: DeletePollDto,
-    @Res() res: Response,
-  ) {
+  async deletePoll(@Param('id') id: number, @Body() query: DeletePollDto) {
     const poll = await this.pollService.deletePoll(Number(id), query);
-    return res.status(200).json({ message: 'Poll deleted', poll: poll });
+    return { message: 'Poll deleted', poll };
   }
 }
