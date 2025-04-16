@@ -1,14 +1,17 @@
+import { ActionType } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
 import {
-  IsDate,
+  IsArray,
+  IsBoolean,
+  IsDateString,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Validate,
 } from 'class-validator';
-import { ActionType } from '@prisma/client';
-import { Transform } from 'class-transformer';
 import { IsPositiveInteger, IsRecordStringNumber } from '../common/validators';
 
 export class GetUserDataDto {
@@ -43,48 +46,47 @@ export class GetUserActivitiesDto {
   @IsEnum(['active', 'inactive', 'created', 'participated'])
   @IsOptional()
   filter?: 'active' | 'inactive' | 'created' | 'participated';
+
+  @IsString()
+  @IsOptional()
+  search?: string;
 }
 
 export class UserActionDto {
-  @IsNumber()
-  @IsNotEmpty()
+  @IsInt()
   id: number;
 
   @IsEnum([ActionType.CREATED, ActionType.VOTED])
-  @IsNotEmpty()
   type: ActionType;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @IsInt()
   pollId: number;
 
   @IsString()
-  @IsNotEmpty()
   pollTitle: string;
 
   @IsString()
-  @IsNotEmpty()
   pollDescription: string;
 
-  @IsDate()
-  @IsNotEmpty()
-  endDate: Date;
+  @IsDateString()
+  endDate: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  @IsBoolean()
+  isActive: boolean;
+
+  @IsInt()
   votersParticipated: number;
 
   @IsString()
-  @IsNotEmpty()
   authorWorldId: string;
 
-  @IsDate()
-  @IsNotEmpty()
-  createdAt: Date;
+  @IsDateString()
+  createdAt: string;
 }
 
 export class UserActivitiesResponseDto {
-  @IsNotEmpty()
+  @IsArray()
+  @Type(() => UserActionDto)
   userActions: UserActionDto[];
 }
 

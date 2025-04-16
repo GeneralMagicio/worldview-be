@@ -12,6 +12,7 @@ import {
   VoteOptionException,
 } from '../common/exceptions';
 import { DatabaseService } from '../database/database.service';
+import { PollService } from '../poll/poll.service';
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -36,12 +37,18 @@ type UserActionFilters = {
       gte?: Date;
       lt?: Date;
     };
+    pollId?: {
+      in?: number[];
+    };
   };
 };
 
 @Injectable()
 export class UserService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly pollService: PollService,
+  ) {}
 
   private validateWeightDistribution(
     weightDistribution: Record<string, number>,
@@ -124,6 +131,20 @@ export class UserService {
     } else if (dto.filter === 'participated') {
       filters.type = ActionType.VOTED;
     }
+    let pollIds: number[] | undefined;
+    if (dto.search) {
+      pollIds = await this.pollService['searchPolls'](dto.search);
+    }
+    if (pollIds && pollIds.length > 0) {
+      if (filters.poll) {
+        filters.poll.pollId = { in: pollIds };
+      } else {
+        filters.poll = { pollId: { in: pollIds } };
+      }
+    } else if (pollIds && pollIds.length === 0) {
+      return { userActions: [] };
+    }
+
     const userActions = await this.databaseService.userAction.findMany({
       where: filters,
       orderBy: { createdAt: 'desc' },
@@ -138,17 +159,15 @@ export class UserService {
             description: true,
             endDate: true,
             authorUserId: true,
+            participantCount: true,
           },
         },
       },
     });
     const actions: UserActionDto[] = await Promise.all(
-      // TODO: it's a temporary work around, should add count to Poll and User and authorWorldId to UserAction later
+      // TODO: it's a temporary work around, should add authorWorldId to UserAction later
       userActions.map(async (action) => {
-        const participantCount = await this.databaseService.userAction.count({
-          where: { pollId: action.poll.pollId, type: ActionType.VOTED },
-        });
-        const authorWorldId = await this.databaseService.user.findUnique({
+        const author = await this.databaseService.user.findUnique({
           where: { id: action.poll.authorUserId },
           select: { worldID: true },
         });
@@ -158,11 +177,11 @@ export class UserService {
           pollId: action.poll.pollId,
           pollTitle: action.poll.title,
           pollDescription: action.poll.description ?? '',
-          endDate: action.poll.endDate,
+          endDate: action.poll.endDate.toISOString(),
           isActive: action.poll.endDate >= now,
-          votersParticipated: participantCount,
-          authorWorldId: authorWorldId?.worldID || '',
-          createdAt: action.createdAt,
+          votersParticipated: action.poll.participantCount,
+          authorWorldId: author?.worldID || '',
+          createdAt: action.createdAt.toISOString(),
         };
       }),
     );

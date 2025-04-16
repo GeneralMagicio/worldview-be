@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ActionType } from '@prisma/client';
+import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import {
   PollNotFoundException,
@@ -11,6 +11,21 @@ import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 @Injectable()
 export class PollService {
   constructor(private readonly databaseService: DatabaseService) {}
+
+  private async searchPolls(searchTerm: string): Promise<number[]> {
+    const searchQuery = searchTerm
+      .split(' ')
+      .map((word) => `${word}:*`)
+      .join(' & ');
+    const searchResults = await this.databaseService.$queryRaw<
+      { pollId: number }[]
+    >`
+      SELECT "pollId" FROM "Poll"
+      WHERE "searchVector" @@ to_tsquery('english', ${searchQuery})
+      ORDER BY ts_rank("searchVector", to_tsquery('english', ${searchQuery})) DESC
+    `;
+    return searchResults.map((result) => result.pollId);
+  }
 
   async createPoll(createPollDto: CreatePollDto) {
     const user = await this.databaseService.user.findUnique({
@@ -72,12 +87,13 @@ export class PollService {
       isActive,
       userVoted,
       userCreated,
+      search,
       sortBy = 'endDate',
       sortOrder = 'asc',
     } = query;
     const skip = (page - 1) * limit;
     const now = new Date();
-    const filters: any = {};
+    const filters: Prisma.PollWhereInput = {};
     let userId: number | undefined;
 
     if (isActive) {
@@ -88,6 +104,7 @@ export class PollService {
     if (isActive === false) {
       filters.OR = [{ startDate: { gt: now } }, { endDate: { lte: now } }];
     }
+
     if ((userCreated || userVoted) && query.worldID) {
       const user = await this.databaseService.user.findUnique({
         where: { worldID: query.worldID },
@@ -99,25 +116,21 @@ export class PollService {
       }
       userId = user.id;
     } else if (userCreated || userVoted) {
-      throw new Error('worldId Not Provided');
+      throw new BadRequestException('worldId Not Provided');
     }
 
     if (userCreated && userVoted) {
-      // Get polls user voted in
       const userVotes = await this.databaseService.vote.findMany({
         where: { userId },
         select: { pollId: true },
       });
       const votedPollIds = userVotes.map((v) => v.pollId);
 
-      // Use OR condition to get polls where user voted OR user created
       filters.OR = [{ authorUserId: userId }, { pollId: { in: votedPollIds } }];
     } else {
       if (userCreated) {
         filters.authorUserId = userId;
       }
-
-      // Get polls user voted in
       let votedPollIds: number[] = [];
       if (userVoted) {
         const userVotes = await this.databaseService.vote.findMany({
@@ -129,15 +142,22 @@ export class PollService {
       }
     }
 
-    // Sorting options
-    const orderBy: any = {};
+    if (search) {
+      const pollIds = await this.searchPolls(search);
+      if (Object.keys(filters).length > 0) {
+        filters.AND = [filters, { pollId: { in: pollIds } }];
+      } else {
+        filters.pollId = { in: pollIds };
+      }
+    }
+
+    const orderBy: Prisma.PollOrderByWithRelationInput = {};
     if (sortBy) {
       orderBy[sortBy] = sortOrder;
     } else {
       orderBy.endDate = 'asc';
     }
 
-    // Fetch polls with pagination
     const [polls, total] = await this.databaseService.$transaction([
       this.databaseService.poll.findMany({
         where: filters,
