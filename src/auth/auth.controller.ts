@@ -4,6 +4,8 @@ import { AuthService } from './auth.service';
 import { JwtService } from './jwt.service';
 import { Public } from './jwt-auth.guard';
 import { VerifyWorldIdDto } from './auth.dto';
+import { SignatureVerificationFailureException } from 'src/common/exceptions';
+import { BadRequestException } from '@nestjs/common';
 
 function isHttps(req: Request) {
   return (
@@ -42,40 +44,32 @@ export class AuthController {
     const { walletPayload, worldIdProof, nonce } = body;
 
     try {
-      const validMessage = await this.authService.verifyPayload(
+      const isValid = await this.authService.verifyPayload(
         walletPayload,
         nonce,
       );
 
-      if (!validMessage) {
-        return res
-          .status(400)
-          .json({ isValid: false, message: 'Signature verification failed' });
+      if (!isValid) {
+        throw new SignatureVerificationFailureException();
       }
 
-      const user = await this.authService.createUser(
-        worldIdProof.nullifier_hash,
-        '',
-      );
+      const worldID = worldIdProof?.nullifier_hash;
+      const walletAddress = walletPayload?.address;
+
+      const user = await this.authService.createUser(worldID, '');
 
       const token = this.jwtService.sign({
         userId: user.id,
-        worldID: worldIdProof?.nullifier_hash,
-        address: walletPayload?.address,
+        worldID,
+        address: walletAddress,
       });
 
       return res.status(200).json({ isValid: true, token });
     } catch (error) {
-      console.log('Error verifying payload:', error);
-      if (error instanceof Error) {
-        return res
-          .status(400)
-          .json({ status: 'error', isValid: false, message: error.message });
-      } else {
-        return res
-          .status(400)
-          .json({ status: 'error', isValid: false, message: 'Unknown error' });
-      }
+      console.error('Error verifying payload:', error);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 }

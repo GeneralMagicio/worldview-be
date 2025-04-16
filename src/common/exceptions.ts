@@ -47,3 +47,9 @@ export class CreateUserException extends HttpException {
     super(message, HttpStatus.BAD_REQUEST);
   }
 }
+
+export class SignatureVerificationFailureException extends HttpException {
+  constructor(message = 'Signature verification failed') {
+    super(message, HttpStatus.BAD_REQUEST);
+  }
+}
