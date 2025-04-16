@@ -49,12 +49,9 @@ model Poll {
   isAnonymous      Boolean      @default(false)
   participantCount Int          @default(0)
   voteResults      Json
-  searchVector     Unsupported("tsvector")? @db.TsVector
   author           User         @relation("PollAuthor", fields: [authorUserId], references: [id])
   votes            Vote[]
   userAction       UserAction[]
-
-  @@index([searchVector], type: Gin)
 }
 
 model Vote {
