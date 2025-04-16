@@ -52,6 +52,10 @@ export class GetPollsDto {
   @IsOptional()
   worldID?: string;
 
+  @IsString()
+  @IsOptional()
+  search?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
