@@ -1,18 +1,9 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import {
-  MiniAppWalletAuthSuccessPayload,
-  ISuccessResult,
-} from '@worldcoin/minikit-js';
 import { JwtService } from './jwt.service';
 import { Public } from './jwt-auth.guard';
-
-interface IRequestPayload {
-  walletPayload: MiniAppWalletAuthSuccessPayload;
-  worldIdProof: ISuccessResult;
-  nonce: string;
-}
+import { VerifyWorldIdDto } from './auth.dto';
 
 function isHttps(req: Request) {
   return (
@@ -45,16 +36,10 @@ export class AuthController {
   @Post('verify-world-id')
   async verifyWorldId(
     @Req() _req: Request,
-    @Body() body: IRequestPayload,
+    @Body() body: VerifyWorldIdDto,
     @Res() res: Response,
   ) {
     const { walletPayload, worldIdProof, nonce } = body;
-
-    if (!walletPayload || !worldIdProof || !nonce) {
-      return res
-        .status(400)
-        .json({ isValid: false, message: 'Missing required fields' });
-    }
 
     try {
       const validMessage = await this.authService.verifyPayload(

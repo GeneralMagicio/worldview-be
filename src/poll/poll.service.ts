@@ -80,8 +80,6 @@ export class PollService {
     const filters: any = {};
     let userId: number | undefined;
 
-    console.log(query.worldID);
-
     if (isActive) {
       filters.startDate = { lte: now };
       filters.endDate = { gt: now };
