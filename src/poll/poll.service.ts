@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ActionType, Prisma } from '@prisma/client';
+import { ActionType } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import {
+  PollNotFoundException,
+  UnauthorizedActionException,
+  UserNotFoundException,
+} from '../common/exceptions';
 import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
@@ -12,22 +17,18 @@ export class PollService {
       where: { worldID: createPollDto.worldID },
     });
     if (!user) {
-      throw new BadRequestException('User does not exist');
+      throw new UserNotFoundException();
     }
     const startDate = new Date(createPollDto.startDate);
     const endDate = new Date(createPollDto.endDate);
     const now = new Date();
-
     if (startDate < now) {
       throw new BadRequestException('Start date cannot be in the past');
     }
-
     if (endDate <= startDate) {
       throw new BadRequestException('End date must be after start date');
     }
-
     return this.databaseService.$transaction(async (tx) => {
-      // Create the poll
       const newPoll = await tx.poll.create({
         data: {
           authorUserId: user.id,
@@ -38,11 +39,9 @@ export class PollService {
           endDate,
           tags: createPollDto.tags || [],
           isAnonymous: createPollDto.isAnonymous || false,
-          voteResults: {}, // Initialize empty vote results
+          voteResults: {},
         },
       });
-
-      // Create user action for CREATED
       await tx.userAction.create({
         data: {
           userId: user.id,
@@ -50,17 +49,18 @@ export class PollService {
           type: ActionType.CREATED,
         },
       });
-
-      // Update user's pollsCreatedCount
+      const pollsCreatedCount = await tx.userAction.count({
+        where: {
+          userId: user.id,
+          type: ActionType.CREATED,
+        },
+      });
       await tx.user.update({
         where: { worldID: createPollDto.worldID },
         data: {
-          pollsCreatedCount: {
-            increment: 1,
-          },
+          pollsCreatedCount,
         },
       });
-
       return newPoll;
     });
   }
@@ -80,6 +80,8 @@ export class PollService {
     const filters: any = {};
     let userId: number | undefined;
 
+    console.log(query.worldID);
+
     if (isActive) {
       filters.startDate = { lte: now };
       filters.endDate = { gt: now };
@@ -95,26 +97,38 @@ export class PollService {
       });
 
       if (!user) {
-        throw new Error('User not found');
+        throw new UserNotFoundException();
       }
       userId = user.id;
     } else if (userCreated || userVoted) {
       throw new Error('worldId Not Provided');
     }
 
-    if (userCreated) {
-      filters.authorUserId = userId;
-    }
-
-    // Get polls user voted in
-    let votedPollIds: number[] = [];
-    if (userVoted) {
+    if (userCreated && userVoted) {
+      // Get polls user voted in
       const userVotes = await this.databaseService.vote.findMany({
         where: { userId },
         select: { pollId: true },
       });
-      votedPollIds = userVotes.map((v) => v.pollId);
-      filters.pollId = { in: votedPollIds };
+      const votedPollIds = userVotes.map((v) => v.pollId);
+
+      // Use OR condition to get polls where user voted OR user created
+      filters.OR = [{ authorUserId: userId }, { pollId: { in: votedPollIds } }];
+    } else {
+      if (userCreated) {
+        filters.authorUserId = userId;
+      }
+
+      // Get polls user voted in
+      let votedPollIds: number[] = [];
+      if (userVoted) {
+        const userVotes = await this.databaseService.vote.findMany({
+          where: { userId },
+          select: { pollId: true },
+        });
+        votedPollIds = userVotes.map((v) => v.pollId);
+        filters.pollId = { in: votedPollIds };
+      }
     }
 
     // Sorting options
@@ -142,17 +156,21 @@ export class PollService {
   async getPollDetails(id: number) {
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId: id },
+      include: {
+        author: true,
+      },
     });
     if (!poll) {
-      throw new Error('Poll Id not found');
+      throw new PollNotFoundException();
     }
-    const user = await this.databaseService.user.findUnique({
-      where: { id: poll?.authorUserId },
-    });
     const now = new Date();
     const isActive = now >= poll.startDate && now <= poll.endDate;
-
-    return { user, poll, isActive };
+    const optionsTotalVotes = await this.getPollQuadraticResults(id);
+    const totalVotes = Object.values(optionsTotalVotes).reduce(
+      (acc, votes) => acc + votes,
+      0,
+    );
+    return { poll, isActive, optionsTotalVotes, totalVotes };
   }
 
   async deletePoll(pollId: number, query: DeletePollDto) {
@@ -160,30 +178,24 @@ export class PollService {
       where: { worldID: query.worldID },
       select: { id: true },
     });
-
     if (!user) {
-      throw new Error('User not found');
+      throw new UserNotFoundException();
     }
-
     const poll = await this.databaseService.poll.findUnique({
       where: { pollId },
     });
-
     if (!poll) {
-      throw new Error('Poll not found');
+      throw new PollNotFoundException();
     }
     if (poll.authorUserId !== user.id) {
-      throw new Error('User Not Authorized');
+      throw new UnauthorizedActionException();
     }
-
     return this.databaseService.$transaction(async (tx) => {
       const deleted = await tx.poll.delete({
         where: {
           pollId,
         },
       });
-
-      // Update user's pollsCreatedCount
       await tx.user.update({
         where: { id: deleted.authorUserId },
         data: {
@@ -192,8 +204,40 @@ export class PollService {
           },
         },
       });
-
       return deleted;
     });
+  }
+
+  async getPollQuadraticResults(
+    pollId: number,
+  ): Promise<Record<string, number>> {
+    const poll = await this.databaseService.poll.findUnique({
+      where: { pollId },
+      select: { options: true },
+    });
+    if (!poll) {
+      throw new PollNotFoundException();
+    }
+    const votes = await this.databaseService.vote.findMany({
+      where: { pollId },
+      select: { quadraticWeights: true },
+    });
+    const result: Record<string, number> = poll.options.reduce(
+      (acc, option) => {
+        acc[option] = 0;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+    votes.forEach((vote) => {
+      if (vote.quadraticWeights) {
+        Object.entries(vote.quadraticWeights as Record<string, number>).forEach(
+          ([option, weight]) => {
+            result[option] = (result[option] || 0) + weight;
+          },
+        );
+      }
+    });
+    return result;
   }
 }

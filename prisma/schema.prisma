@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,8 +15,8 @@ model User {
   pollsCreatedCount      Int          @default(0)
   pollsParticipatedCount Int          @default(0)
   createdPolls           Poll[]       @relation("PollAuthor")
-  votes                  Vote[]
   actions                UserAction[]
+  votes                  Vote[]
 }
 
 model UserAction {
@@ -30,10 +24,10 @@ model UserAction {
   userId    Int
   pollId    Int
   type      ActionType
-  user      User       @relation(fields: [userId], references: [id])
-  poll      Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now()) @updatedAt
+  poll      Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id])
 }
 
 model Poll {
@@ -50,8 +44,8 @@ model Poll {
   participantCount Int          @default(0)
   voteResults      Json
   author           User         @relation("PollAuthor", fields: [authorUserId], references: [id])
-  votes            Vote[]
   userAction       UserAction[]
+  votes            Vote[]
 }
 
 model Vote {
@@ -61,8 +55,9 @@ model Vote {
   votingPower        Int
   weightDistribution Json
   proof              String
-  user               User   @relation(fields: [userId], references: [id])
+  quadraticWeights   Json?  @default(dbgenerated("calculate_quadratic_weights(\"weightDistribution\")"))
   poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  user               User   @relation(fields: [userId], references: [id])
 }
 
 enum ActionType {

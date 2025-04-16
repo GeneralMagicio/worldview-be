@@ -12,6 +12,12 @@ import { JwtService } from './jwt.service';
 const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
+export interface JwtPayload {
+  userId: number;
+  worldID: string;
+  address: string;
+}
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -37,7 +43,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.replace('Bearer ', '');
 
     try {
-      const payload = this.jwtService.verify(token);
+      const payload: JwtPayload = this.jwtService.verify(token);
       request.user = payload;
       return true;
     } catch (err) {

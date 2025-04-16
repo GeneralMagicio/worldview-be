@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from './auth/jwt.service';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
+import { HttpExceptionFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -56,7 +57,20 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector, app.get(JwtService)));
 
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      exceptionFactory: (errors) => {
+        const firstError = errors[0];
+        if (!firstError?.constraints) {
+          return new BadRequestException('Validation failed');
+        }
+        const message = Object.values(firstError.constraints)[0];
+        return new BadRequestException(message);
+      },
+    }),
+  );
   app.use(cookieParser());
 
   await app.listen(process.env.PORT ?? 3000);

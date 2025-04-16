@@ -1,78 +1,42 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Req,
-  Query,
-  Res,
+  Controller,
   Delete,
-  UsePipes,
-  ValidationPipe,
-  BadRequestException,
+  Get,
+  Param,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { PollService } from './poll.service';
 import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
+import { PollService } from './poll.service';
+import { User } from 'src/auth/user.docerator';
 
 @Controller('poll')
 export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
-  @UsePipes(ValidationPipe)
-  create(@Body() createPollDto: CreatePollDto) {
-    return this.pollService.createPoll(createPollDto);
+  async createPoll(@Body() dto: CreatePollDto) {
+    return await this.pollService.createPoll(dto);
   }
 
   @Get()
-  @UsePipes(ValidationPipe)
   async getPolls(
-    @Req() req,
     @Query() query: GetPollsDto,
-    @Res() res: Response,
+    @User('worldID') worldID: string,
   ) {
-    try {
-      const polls = await this.pollService.getPolls(query);
-      return res.status(200).json(polls);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
-    }
+    query.worldID = worldID;
+    return await this.pollService.getPolls(query);
   }
 
   @Get(':id')
-  async getPollDetails(@Param('id') id: number, @Res() res: Response) {
-    try {
-      const poll = await this.pollService.getPollDetails(Number(id));
-      return res.status(200).json(poll);
-    } catch (error) {
-      if (error.message === 'Poll Id not found') {
-        return res.status(404).json({ message: error.message });
-      }
-
-      return res
-        .status(500)
-        .json({ message: 'Internal server error', error: error.message });
-    }
+  async getPollDetails(@Param('id') id: number) {
+    return await this.pollService.getPollDetails(Number(id));
   }
 
   @Delete(':id')
-  async deletePoll(
-    @Param('id') id: number,
-    @Body() query: DeletePollDto,
-    @Res() res: Response,
-  ) {
-    try {
-      const poll = await this.pollService.deletePoll(Number(id), query);
-
-      return res.status(200).json({ message: 'Poll deleted', poll: poll });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
-      throw new BadRequestException(errorMessage);
-    }
+  async deletePoll(@Param('id') id: number, @Body() query: DeletePollDto) {
+    const poll = await this.pollService.deletePoll(Number(id), query);
+    return { message: 'Poll deleted', poll };
   }
 }
