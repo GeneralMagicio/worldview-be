@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import {
   MiniAppWalletAuthSuccessPayload,
-  MiniAppVerifyActionPayload,
+  ISuccessResult,
 } from '@worldcoin/minikit-js';
 import { Type } from 'class-transformer';
 
@@ -14,7 +14,7 @@ export class VerifyWorldIdDto {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => Object)
-  worldIdProof: MiniAppVerifyActionPayload;
+  worldIdProof: ISuccessResult;
 
   @IsNotEmpty()
   @IsString()
