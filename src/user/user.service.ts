@@ -82,29 +82,36 @@ export class UserService {
     }
   }
 
+  async updateUserPollsCount(userId: number, type: ActionType) {
+    const pollsCount = await this.databaseService.userAction.count({
+      where: { userId, type },
+    });
+    await this.databaseService.user.update({
+      where: { id: userId },
+      data: {
+        pollsCreatedCount: type === ActionType.CREATED ? pollsCount : undefined,
+        pollsParticipatedCount:
+          type === ActionType.VOTED ? pollsCount : undefined,
+      },
+    });
+  }
+
   async getUserData(dto: GetUserDataDto): Promise<UserDataResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
-      select: { id: true, worldID: true },
+      select: {
+        id: true,
+        worldID: true,
+        pollsCreatedCount: true,
+        pollsParticipatedCount: true,
+      },
     });
     if (!user) {
       throw new UserNotFoundException();
     }
-    const pollsCreated = await this.databaseService.userAction.count({
-      where: {
-        userId: user.id,
-        type: ActionType.CREATED,
-      },
-    });
-    const pollsParticipated = await this.databaseService.userAction.count({
-      where: {
-        userId: user.id,
-        type: ActionType.VOTED,
-      },
-    });
     return {
-      pollsCreated,
-      pollsParticipated,
+      pollsCreated: user.pollsCreatedCount,
+      pollsParticipated: user.pollsParticipatedCount,
       worldID: user.worldID,
       worldProfilePic: null,
     };
@@ -262,30 +269,8 @@ export class UserService {
           type: ActionType.VOTED,
         },
       });
-      const pollsParticipatedCount = await prisma.userAction.count({
-        where: {
-          userId: user.id,
-          type: ActionType.VOTED,
-        },
-      });
-      const participantCount = await prisma.userAction.count({
-        where: {
-          pollId: dto.pollId,
-          type: ActionType.VOTED,
-        },
-      });
-      await prisma.user.update({
-        where: { worldID: dto.worldID },
-        data: {
-          pollsParticipatedCount,
-        },
-      });
-      await prisma.poll.update({
-        where: { pollId: dto.pollId },
-        data: {
-          participantCount,
-        },
-      });
+      await this.updateUserPollsCount(user.id, ActionType.VOTED);
+      await this.pollService.updatePollParticipantCount(dto.pollId);
       return {
         voteID: vote.voteID,
         actionId: action.id,

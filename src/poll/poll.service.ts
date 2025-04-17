@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import { UserService } from 'src/user/user.service';
 import {
   PollNotFoundException,
   UnauthorizedActionException,
@@ -10,7 +11,20 @@ import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly userService: UserService,
+  ) {}
+
+  async updatePollParticipantCount(pollId: number) {
+    const participantCount = await this.databaseService.userAction.count({
+      where: { pollId, type: ActionType.VOTED },
+    });
+    await this.databaseService.poll.update({
+      where: { pollId },
+      data: { participantCount },
+    });
+  }
 
   private async searchPolls(searchTerm: string): Promise<number[]> {
     const searchQuery = searchTerm
@@ -64,18 +78,7 @@ export class PollService {
           type: ActionType.CREATED,
         },
       });
-      const pollsCreatedCount = await tx.userAction.count({
-        where: {
-          userId: user.id,
-          type: ActionType.CREATED,
-        },
-      });
-      await tx.user.update({
-        where: { worldID: createPollDto.worldID },
-        data: {
-          pollsCreatedCount,
-        },
-      });
+      await this.userService.updateUserPollsCount(user.id, ActionType.CREATED);
       return newPoll;
     });
   }
@@ -209,19 +212,25 @@ export class PollService {
       throw new UnauthorizedActionException();
     }
     return this.databaseService.$transaction(async (tx) => {
+      const pollParticipants = await tx.userAction.findMany({
+        where: { pollId, type: ActionType.VOTED },
+        select: { userId: true },
+      });
+      const participantUserIds = [
+        ...new Set(pollParticipants.map((v) => v.userId)),
+      ];
       const deleted = await tx.poll.delete({
         where: {
           pollId,
         },
       });
-      await tx.user.update({
-        where: { id: deleted.authorUserId },
-        data: {
-          pollsCreatedCount: {
-            decrement: 1,
-          },
-        },
-      });
+      await this.userService.updateUserPollsCount(
+        deleted.authorUserId,
+        ActionType.CREATED,
+      );
+      for (const userId of participantUserIds) {
+        await this.userService.updateUserPollsCount(userId, ActionType.VOTED);
+      }
       return deleted;
     });
   }
