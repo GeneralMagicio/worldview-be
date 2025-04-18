@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ActionType } from '@prisma/client';
 import { VOTING_POWER } from '../common/constants';
 import {
@@ -47,6 +47,7 @@ type UserActionFilters = {
 export class UserService {
   constructor(
     private readonly databaseService: DatabaseService,
+    @Inject(forwardRef(() => PollService))
     private readonly pollService: PollService,
   ) {}
 

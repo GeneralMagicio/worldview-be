@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { UserService } from 'src/user/user.service';
@@ -13,6 +18,7 @@ import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 export class PollService {
   constructor(
     private readonly databaseService: DatabaseService,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
 
