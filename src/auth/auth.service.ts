@@ -6,6 +6,7 @@ import {
   SiweMessage,
 } from '@worldcoin/minikit-js';
 import { DatabaseService } from 'src/database/database.service';
+import { CreateUserException } from 'src/common/exceptions';
 
 interface IValidMessage {
   isValid: boolean;
@@ -32,19 +33,14 @@ export class AuthService {
   }
 
   async createUser(worldID: string, name: string) {
-    try {
-      return await this.databaseService.user.upsert({
-        where: { worldID },
-        update: { name },
-        create: { worldID, name },
-      });
-    } catch (error) {
-      console.error('Error creating/updating user:', error);
-      if (error instanceof Error) {
-        throw new Error(`Failed to create/update user: ${error.message}`);
-      } else {
-        throw new Error('Failed to create/update user');
-      }
-    }
+    const user = await this.databaseService.user.upsert({
+      where: { worldID },
+      update: { name },
+      create: { worldID, name },
+    });
+
+    if (!user) throw new CreateUserException();
+
+    return user;
   }
 }
