@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { JwtVerificationFailureException } from 'src/common/exceptions';
 
 @Injectable()
 export class JwtService {
@@ -18,11 +19,8 @@ export class JwtService {
     try {
       return jwt.verify(token, this.secret);
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`JWT verification failed: ${error.message}`);
-      } else {
-        throw new Error('JWT verification failed');
-      }
+      console.error(error);
+      throw new JwtVerificationFailureException();
     }
   }
 

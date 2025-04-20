@@ -53,3 +53,9 @@ export class SignatureVerificationFailureException extends HttpException {
     super(message, HttpStatus.BAD_REQUEST);
   }
 }
+
+export class JwtVerificationFailureException extends HttpException {
+  constructor(message = 'JWT verification failed') {
+    super(message, HttpStatus.BAD_REQUEST);
+  }
+}

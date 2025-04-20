@@ -35,7 +35,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('verify-world-id')
+  @Post('verifyWorldId')
   async verifyWorldId(
     @Req() _req: Request,
     @Body() body: VerifyWorldIdDto,
@@ -66,7 +66,7 @@ export class AuthController {
 
       return res.status(200).json({ isValid: true, token });
     } catch (error) {
-      console.error('Error verifying payload:', error);
+      console.error(error);
       throw new BadRequestException(
         error instanceof Error ? error.message : 'Unknown error',
       );
