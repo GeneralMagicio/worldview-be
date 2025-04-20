@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { ActionType } from '@prisma/client';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ActionType, Prisma } from '@prisma/client';
 import { VOTING_POWER } from '../common/constants';
 import {
   CreateUserException,
@@ -47,6 +47,7 @@ type UserActionFilters = {
 export class UserService {
   constructor(
     private readonly databaseService: DatabaseService,
+    @Inject(forwardRef(() => PollService))
     private readonly pollService: PollService,
   ) {}
 
@@ -82,29 +83,41 @@ export class UserService {
     }
   }
 
+  async updateUserPollsCount(
+    userId: number,
+    type: ActionType,
+    prismaClient?: Prisma.TransactionClient, // To ensure Prisma transaction function runs queries in order
+  ) {
+    const prisma = prismaClient || this.databaseService;
+    const pollsCount = await prisma.userAction.count({
+      where: { userId, type },
+    });
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        pollsCreatedCount: type === ActionType.CREATED ? pollsCount : undefined,
+        pollsParticipatedCount:
+          type === ActionType.VOTED ? pollsCount : undefined,
+      },
+    });
+  }
+
   async getUserData(dto: GetUserDataDto): Promise<UserDataResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
-      select: { id: true, worldID: true },
+      select: {
+        id: true,
+        worldID: true,
+        pollsCreatedCount: true,
+        pollsParticipatedCount: true,
+      },
     });
     if (!user) {
       throw new UserNotFoundException();
     }
-    const pollsCreated = await this.databaseService.userAction.count({
-      where: {
-        userId: user.id,
-        type: ActionType.CREATED,
-      },
-    });
-    const pollsParticipated = await this.databaseService.userAction.count({
-      where: {
-        userId: user.id,
-        type: ActionType.VOTED,
-      },
-    });
     return {
-      pollsCreated,
-      pollsParticipated,
+      pollsCreated: user.pollsCreatedCount,
+      pollsParticipated: user.pollsParticipatedCount,
       worldID: user.worldID,
       worldProfilePic: null,
     };
@@ -262,30 +275,8 @@ export class UserService {
           type: ActionType.VOTED,
         },
       });
-      const pollsParticipatedCount = await prisma.userAction.count({
-        where: {
-          userId: user.id,
-          type: ActionType.VOTED,
-        },
-      });
-      const participantCount = await prisma.userAction.count({
-        where: {
-          pollId: dto.pollId,
-          type: ActionType.VOTED,
-        },
-      });
-      await prisma.user.update({
-        where: { worldID: dto.worldID },
-        data: {
-          pollsParticipatedCount,
-        },
-      });
-      await prisma.poll.update({
-        where: { pollId: dto.pollId },
-        data: {
-          participantCount,
-        },
-      });
+      await this.updateUserPollsCount(user.id, ActionType.VOTED, prisma);
+      await this.pollService.updatePollParticipantCount(dto.pollId, prisma);
       return {
         voteID: vote.voteID,
         actionId: action.id,
