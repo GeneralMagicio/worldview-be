@@ -16,8 +16,11 @@ export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
-  async createPoll(@Body() dto: CreatePollDto) {
-    return await this.pollService.createPoll(dto);
+  async createPoll(
+    @Body() dto: CreatePollDto,
+    @User('worldID') worldID: string,
+  ) {
+    return await this.pollService.createPoll(dto, worldID);
   }
 
   @Get()
@@ -25,8 +28,7 @@ export class PollController {
     @Query() query: GetPollsDto,
     @User('worldID') worldID: string,
   ) {
-    query.worldID = worldID;
-    return await this.pollService.getPolls(query);
+    return await this.pollService.getPolls(query, worldID);
   }
 
   @Get(':id')

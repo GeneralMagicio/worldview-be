@@ -188,9 +188,12 @@ export class UserService {
     return { userActions: actions };
   }
 
-  async getUserVotes(dto: GetUserVotesDto): Promise<UserVotesResponseDto> {
+  async getUserVotes(
+    dto: GetUserVotesDto,
+    worldID: string,
+  ): Promise<UserVotesResponseDto> {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: dto.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {
@@ -220,9 +223,9 @@ export class UserService {
     };
   }
 
-  async setVote(dto: SetVoteDto): Promise<SetVoteResponseDto> {
+  async setVote(dto: SetVoteDto, worldID: string): Promise<SetVoteResponseDto> {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: dto.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {
@@ -275,7 +278,7 @@ export class UserService {
         },
       });
       await prisma.user.update({
-        where: { worldID: dto.worldID },
+        where: { worldID },
         data: {
           pollsParticipatedCount,
         },

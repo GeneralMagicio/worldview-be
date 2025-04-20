@@ -14,10 +14,6 @@ import {
 export class CreatePollDto {
   @IsString()
   @IsNotEmpty()
-  worldID: string;
-
-  @IsString()
-  @IsNotEmpty()
   title: string;
 
   @IsString()
@@ -48,10 +44,6 @@ export class CreatePollDto {
 }
 
 export class GetPollsDto {
-  @IsString()
-  @IsOptional()
-  worldID?: string;
-
   @IsString()
   @IsOptional()
   search?: string;

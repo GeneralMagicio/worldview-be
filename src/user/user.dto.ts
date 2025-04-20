@@ -95,10 +95,6 @@ export class GetUserVotesDto {
   @Validate(IsPositiveInteger)
   @Transform(({ value }) => parseInt(value, 10))
   pollId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  worldID: string;
 }
 
 export class UserVotesResponseDto {
@@ -119,10 +115,6 @@ export class SetVoteDto {
   @IsNotEmpty()
   @Validate(IsPositiveInteger)
   pollId: number;
-
-  @IsNotEmpty()
-  @IsString()
-  worldID: string;
 
   @IsNotEmpty()
   @Validate(IsRecordStringNumber)
