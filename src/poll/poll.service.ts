@@ -22,11 +22,15 @@ export class PollService {
     private readonly userService: UserService,
   ) {}
 
-  async updatePollParticipantCount(pollId: number) {
-    const participantCount = await this.databaseService.userAction.count({
+  async updatePollParticipantCount(
+    pollId: number,
+    prismaClient?: Prisma.TransactionClient, // To ensure Prisma transaction function runs queries in order
+  ) {
+    const prisma = prismaClient || this.databaseService;
+    const participantCount = await prisma.userAction.count({
       where: { pollId, type: ActionType.VOTED },
     });
-    await this.databaseService.poll.update({
+    await prisma.poll.update({
       where: { pollId },
       data: { participantCount },
     });
@@ -84,7 +88,11 @@ export class PollService {
           type: ActionType.CREATED,
         },
       });
-      await this.userService.updateUserPollsCount(user.id, ActionType.CREATED);
+      await this.userService.updateUserPollsCount(
+        user.id,
+        ActionType.CREATED,
+        tx,
+      );
       return newPoll;
     });
   }
@@ -233,9 +241,14 @@ export class PollService {
       await this.userService.updateUserPollsCount(
         deleted.authorUserId,
         ActionType.CREATED,
+        tx,
       );
       for (const userId of participantUserIds) {
-        await this.userService.updateUserPollsCount(userId, ActionType.VOTED);
+        await this.userService.updateUserPollsCount(
+          userId,
+          ActionType.VOTED,
+          tx,
+        );
       }
       return deleted;
     });

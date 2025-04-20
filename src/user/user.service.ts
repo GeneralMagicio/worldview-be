@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ActionType } from '@prisma/client';
+import { ActionType, Prisma } from '@prisma/client';
 import { VOTING_POWER } from '../common/constants';
 import {
   CreateUserException,
@@ -83,11 +83,16 @@ export class UserService {
     }
   }
 
-  async updateUserPollsCount(userId: number, type: ActionType) {
-    const pollsCount = await this.databaseService.userAction.count({
+  async updateUserPollsCount(
+    userId: number,
+    type: ActionType,
+    prismaClient?: Prisma.TransactionClient, // To ensure Prisma transaction function runs queries in order
+  ) {
+    const prisma = prismaClient || this.databaseService;
+    const pollsCount = await prisma.userAction.count({
       where: { userId, type },
     });
-    await this.databaseService.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
         pollsCreatedCount: type === ActionType.CREATED ? pollsCount : undefined,
@@ -270,8 +275,8 @@ export class UserService {
           type: ActionType.VOTED,
         },
       });
-      await this.updateUserPollsCount(user.id, ActionType.VOTED);
-      await this.pollService.updatePollParticipantCount(dto.pollId);
+      await this.updateUserPollsCount(user.id, ActionType.VOTED, prisma);
+      await this.pollService.updatePollParticipantCount(dto.pollId, prisma);
       return {
         voteID: vote.voteID,
         actionId: action.id,
