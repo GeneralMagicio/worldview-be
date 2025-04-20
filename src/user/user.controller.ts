@@ -51,8 +51,11 @@ export class UserController {
   }
 
   @Post('editVote')
-  async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
-    return await this.userService.editVote(dto);
+  async editVote(
+    @Body() dto: EditVoteDto,
+    @User('worldID') worldID: string,
+  ): Promise<EditVoteResponseDto> {
+    return await this.userService.editVote(dto, worldID);
   }
 
   @Post('createUser')

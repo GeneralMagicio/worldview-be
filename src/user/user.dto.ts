@@ -99,6 +99,10 @@ export class GetUserVotesDto {
 
 export class UserVotesResponseDto {
   @IsNotEmpty()
+  @IsString()
+  voteID: string;
+
+  @IsNotEmpty()
   @IsString({ each: true })
   options: string[];
 
@@ -132,10 +136,6 @@ export class SetVoteResponseDto {
 }
 
 export class EditVoteDto {
-  @IsNotEmpty()
-  @IsString()
-  worldID: string;
-
   @IsNotEmpty()
   @IsString()
   voteID: string;
