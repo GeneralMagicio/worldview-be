@@ -7,7 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
 import { User } from 'src/auth/user.docerator';
 
@@ -37,8 +37,8 @@ export class PollController {
   }
 
   @Delete(':id')
-  async deletePoll(@Param('id') id: number, @Body() query: DeletePollDto) {
-    const poll = await this.pollService.deletePoll(Number(id), query);
+  async deletePoll(@Param('id') id: number, @User('worldID') worldID: string) {
+    const poll = await this.pollService.deletePoll(Number(id), worldID);
     return { message: 'Poll deleted', poll };
   }
 }

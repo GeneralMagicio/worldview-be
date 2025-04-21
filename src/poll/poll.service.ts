@@ -12,7 +12,7 @@ import {
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions';
-import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
@@ -217,9 +217,9 @@ export class PollService {
     return { poll, isActive, optionsTotalVotes, totalVotes };
   }
 
-  async deletePoll(pollId: number, query: DeletePollDto) {
+  async deletePoll(pollId: number, worldID: string) {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: query.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {
