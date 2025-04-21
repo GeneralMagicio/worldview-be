@@ -14,7 +14,7 @@ import {
   UserVotesResponseDto,
 } from './user.dto';
 import { UserService } from './user.service';
-import { User } from 'src/auth/user.docerator';
+import { User } from 'src/auth/user.decorator';
 
 @Controller('user')
 export class UserController {

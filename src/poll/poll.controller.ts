@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { CreatePollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
-import { User } from 'src/auth/user.docerator';
+import { User } from 'src/auth/user.decorator';
 
 @Controller('poll')
 export class PollController {
