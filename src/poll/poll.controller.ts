@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
+import { User } from 'src/auth/user.docerator';
 
 @Controller('poll')
 export class PollController {
@@ -20,7 +21,11 @@ export class PollController {
   }
 
   @Get()
-  async getPolls(@Query() query: GetPollsDto) {
+  async getPolls(
+    @Query() query: GetPollsDto,
+    @User('worldID') worldID: string,
+  ) {
+    query.worldID = worldID;
     return await this.pollService.getPolls(query);
   }
 

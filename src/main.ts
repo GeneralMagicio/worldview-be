@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { Reflector } from '@nestjs/core';
+import { JwtService } from './auth/jwt.service';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
@@ -50,6 +53,9 @@ async function bootstrap() {
     },
     credentials: true,
   });
+
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(reflector, app.get(JwtService)));
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(

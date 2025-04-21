@@ -1,25 +1,11 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
-import { MiniAppWalletAuthSuccessPayload } from '@worldcoin/minikit-js';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-
-interface IRequestPayload {
-  payload: MiniAppWalletAuthSuccessPayload;
-}
-
-type RequestWithCookies = Request & {
-  cookies: {
-    siwe?: string;
-  };
-};
+import { JwtService } from './jwt.service';
+import { Public } from './jwt-auth.guard';
+import { VerifyWorldIdDto } from './auth.dto';
+import { SignatureVerificationFailureException } from 'src/common/exceptions';
+import { BadRequestException } from '@nestjs/common';
 
 function isHttps(req: Request) {
   return (
@@ -29,8 +15,12 @@ function isHttps(req: Request) {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
 
+  @Public()
   @Get('nonce')
   generateNonce(@Req() req: Request, @Res() res: Response) {
     const nonce = this.authService.generateNonce();
@@ -41,20 +31,45 @@ export class AuthController {
       maxAge: 2 * 60 * 1000, //2 minutes
     });
 
-    return { nonce };
+    return res.json({ nonce });
   }
 
-  @Post('verifyPayload')
-  async verifyPayload(
-    @Req() req: RequestWithCookies,
-    @Body() body: IRequestPayload,
+  @Public()
+  @Post('verifyWorldId')
+  async verifyWorldId(
+    @Req() _req: Request,
+    @Body() body: VerifyWorldIdDto,
+    @Res() res: Response,
   ) {
-    const { payload } = body;
-    const storedNonce = req.cookies.siwe;
-    if (!storedNonce) {
-      throw new BadRequestException('No nonce found in cookies');
+    const { walletPayload, worldIdProof, nonce } = body;
+
+    try {
+      const isValid = await this.authService.verifyPayload(
+        walletPayload,
+        nonce,
+      );
+
+      if (!isValid) {
+        throw new SignatureVerificationFailureException();
+      }
+
+      const worldID = worldIdProof?.nullifier_hash;
+      const walletAddress = walletPayload?.address;
+
+      const user = await this.authService.createUser(worldID, '');
+
+      const token = this.jwtService.sign({
+        userId: user.id,
+        worldID,
+        address: walletAddress,
+      });
+
+      return res.status(200).json({ isValid: true, token });
+    } catch (error) {
+      console.error(error);
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
-    const isValid = await this.authService.verifyPayload(payload, storedNonce);
-    return { isValid };
   }
 }
