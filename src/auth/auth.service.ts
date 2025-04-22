@@ -32,11 +32,11 @@ export class AuthService {
     return validMessage.isValid;
   }
 
-  async createUser(worldID: string, name: string) {
+  async createUser(worldID: string, name: string, profilePicture: string) {
     const user = await this.databaseService.user.upsert({
       where: { worldID },
-      update: { name },
-      create: { worldID, name },
+      update: { name, profilePicture },
+      create: { worldID, name, profilePicture },
     });
 
     if (!user) throw new CreateUserException();

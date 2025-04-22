@@ -41,7 +41,7 @@ export class AuthController {
     @Body() body: VerifyWorldIdDto,
     @Res() res: Response,
   ) {
-    const { walletPayload, worldIdProof, nonce } = body;
+    const { walletPayload, worldIdProof, userDetails, nonce } = body;
 
     try {
       const isValid = await this.authService.verifyPayload(
@@ -56,7 +56,11 @@ export class AuthController {
       const worldID = worldIdProof?.nullifier_hash;
       const walletAddress = walletPayload?.address;
 
-      const user = await this.authService.createUser(worldID, '');
+      const user = await this.authService.createUser(
+        worldID,
+        userDetails.username,
+        userDetails.profilePicture,
+      );
 
       const token = this.jwtService.sign({
         userId: user.id,
