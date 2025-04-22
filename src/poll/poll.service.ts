@@ -187,6 +187,9 @@ export class PollService {
     const [polls, total] = await this.databaseService.$transaction([
       this.databaseService.poll.findMany({
         where: filters,
+        include: {
+          author: true,
+        },
         orderBy,
         skip,
         take: Number(limit),
