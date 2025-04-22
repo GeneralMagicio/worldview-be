@@ -95,13 +95,13 @@ export class GetUserVotesDto {
   @Validate(IsPositiveInteger)
   @Transform(({ value }) => parseInt(value, 10))
   pollId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  worldID: string;
 }
 
 export class UserVotesResponseDto {
+  @IsNotEmpty()
+  @IsString()
+  voteID: string;
+
   @IsNotEmpty()
   @IsString({ each: true })
   options: string[];
@@ -121,10 +121,6 @@ export class SetVoteDto {
   pollId: number;
 
   @IsNotEmpty()
-  @IsString()
-  worldID: string;
-
-  @IsNotEmpty()
   @Validate(IsRecordStringNumber)
   weightDistribution: Record<string, number>;
 }
@@ -140,10 +136,6 @@ export class SetVoteResponseDto {
 }
 
 export class EditVoteDto {
-  @IsNotEmpty()
-  @IsString()
-  worldID: string;
-
   @IsNotEmpty()
   @IsString()
   voteID: string;

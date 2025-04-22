@@ -201,9 +201,12 @@ export class UserService {
     return { userActions: actions };
   }
 
-  async getUserVotes(dto: GetUserVotesDto): Promise<UserVotesResponseDto> {
+  async getUserVotes(
+    dto: GetUserVotesDto,
+    worldID: string,
+  ): Promise<UserVotesResponseDto> {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: dto.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {
@@ -221,21 +224,26 @@ export class UserService {
         pollId: dto.pollId,
         userId: user.id,
       },
-      select: { votingPower: true, weightDistribution: true },
+      select: {
+        voteID: true,
+        votingPower: true,
+        weightDistribution: true,
+      },
     });
     if (!vote) {
       throw new VoteNotFoundException();
     }
     return {
+      voteID: vote.voteID,
       options: poll.options,
       votingPower: vote.votingPower,
       weightDistribution: vote.weightDistribution as Record<string, number>,
     };
   }
 
-  async setVote(dto: SetVoteDto): Promise<SetVoteResponseDto> {
+  async setVote(dto: SetVoteDto, worldID: string): Promise<SetVoteResponseDto> {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: dto.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {
@@ -284,7 +292,10 @@ export class UserService {
     });
   }
 
-  async editVote(dto: EditVoteDto): Promise<EditVoteResponseDto> {
+  async editVote(
+    dto: EditVoteDto,
+    worldID: string,
+  ): Promise<EditVoteResponseDto> {
     const vote = await this.databaseService.vote.findUnique({
       where: { voteID: dto.voteID },
       select: {
@@ -305,7 +316,7 @@ export class UserService {
       where: { id: vote.userId },
       select: { worldID: true },
     });
-    if (user?.worldID !== dto.worldID) {
+    if (user?.worldID !== worldID) {
       throw new UnauthorizedActionException();
     }
     this.validateWeightDistribution(dto.weightDistribution, vote.poll.options);

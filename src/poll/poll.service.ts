@@ -12,7 +12,7 @@ import {
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions';
-import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 
 @Injectable()
 export class PollService {
@@ -51,17 +51,26 @@ export class PollService {
     return searchResults.map((result) => result.pollId);
   }
 
-  async createPoll(createPollDto: CreatePollDto) {
+  async createPoll(createPollDto: CreatePollDto, worldID: string) {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: createPollDto.worldID },
+      where: { worldID },
     });
     if (!user) {
       throw new UserNotFoundException();
     }
     const startDate = new Date(createPollDto.startDate);
+    // temporary fix by adding 1min for tiny delay in time from receiving the request
+    const checkDate = new Date(startDate.getTime() + 60000);
     const endDate = new Date(createPollDto.endDate);
     const now = new Date();
-    if (startDate < now) {
+
+    console.log('date', {
+      checkDate,
+      startDate,
+      now,
+    });
+
+    if (checkDate < now) {
       throw new BadRequestException('Start date cannot be in the past');
     }
     if (endDate <= startDate) {
@@ -97,7 +106,7 @@ export class PollService {
     });
   }
 
-  async getPolls(query: GetPollsDto) {
+  async getPolls(query: GetPollsDto, worldID: string) {
     const {
       page = 1,
       limit = 10,
@@ -122,9 +131,9 @@ export class PollService {
       filters.OR = [{ startDate: { gt: now } }, { endDate: { lte: now } }];
     }
 
-    if ((userCreated || userVoted) && query.worldID) {
+    if ((userCreated || userVoted) && worldID) {
       const user = await this.databaseService.user.findUnique({
-        where: { worldID: query.worldID },
+        where: { worldID },
         select: { id: true },
       });
 
@@ -178,6 +187,9 @@ export class PollService {
     const [polls, total] = await this.databaseService.$transaction([
       this.databaseService.poll.findMany({
         where: filters,
+        include: {
+          author: true,
+        },
         orderBy,
         skip,
         take: Number(limit),
@@ -208,9 +220,9 @@ export class PollService {
     return { poll, isActive, optionsTotalVotes, totalVotes };
   }
 
-  async deletePoll(pollId: number, query: DeletePollDto) {
+  async deletePoll(pollId: number, worldID: string) {
     const user = await this.databaseService.user.findUnique({
-      where: { worldID: query.worldID },
+      where: { worldID },
       select: { id: true },
     });
     if (!user) {

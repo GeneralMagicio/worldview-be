@@ -14,6 +14,7 @@ import {
   UserVotesResponseDto,
 } from './user.dto';
 import { UserService } from './user.service';
+import { User } from 'src/auth/user.decorator';
 
 @Controller('user')
 export class UserController {
@@ -36,18 +37,25 @@ export class UserController {
   @Get('getUserVotes')
   async getUserVotes(
     @Query() query: GetUserVotesDto,
+    @User('worldID') worldID: string,
   ): Promise<UserVotesResponseDto> {
-    return await this.userService.getUserVotes(query);
+    return await this.userService.getUserVotes(query, worldID);
   }
 
   @Post('setVote')
-  async setVote(@Body() dto: SetVoteDto): Promise<SetVoteResponseDto> {
-    return await this.userService.setVote(dto);
+  async setVote(
+    @Body() dto: SetVoteDto,
+    @User('worldID') worldID: string,
+  ): Promise<SetVoteResponseDto> {
+    return await this.userService.setVote(dto, worldID);
   }
 
   @Post('editVote')
-  async editVote(@Body() dto: EditVoteDto): Promise<EditVoteResponseDto> {
-    return await this.userService.editVote(dto);
+  async editVote(
+    @Body() dto: EditVoteDto,
+    @User('worldID') worldID: string,
+  ): Promise<EditVoteResponseDto> {
+    return await this.userService.editVote(dto, worldID);
   }
 
   @Post('createUser')

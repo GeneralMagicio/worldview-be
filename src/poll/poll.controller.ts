@@ -7,17 +7,20 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CreatePollDto, DeletePollDto, GetPollsDto } from './Poll.dto';
+import { CreatePollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
-import { User } from 'src/auth/user.docerator';
+import { User } from 'src/auth/user.decorator';
 
 @Controller('poll')
 export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
-  async createPoll(@Body() dto: CreatePollDto) {
-    return await this.pollService.createPoll(dto);
+  async createPoll(
+    @Body() dto: CreatePollDto,
+    @User('worldID') worldID: string,
+  ) {
+    return await this.pollService.createPoll(dto, worldID);
   }
 
   @Get()
@@ -25,8 +28,7 @@ export class PollController {
     @Query() query: GetPollsDto,
     @User('worldID') worldID: string,
   ) {
-    query.worldID = worldID;
-    return await this.pollService.getPolls(query);
+    return await this.pollService.getPolls(query, worldID);
   }
 
   @Get(':id')
@@ -35,8 +37,8 @@ export class PollController {
   }
 
   @Delete(':id')
-  async deletePoll(@Param('id') id: number, @Body() query: DeletePollDto) {
-    const poll = await this.pollService.deletePoll(Number(id), query);
+  async deletePoll(@Param('id') id: number, @User('worldID') worldID: string) {
+    const poll = await this.pollService.deletePoll(Number(id), worldID);
     return { message: 'Poll deleted', poll };
   }
 }
