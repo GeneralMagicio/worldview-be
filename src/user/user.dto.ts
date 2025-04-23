@@ -36,6 +36,10 @@ export class UserDataResponseDto {
   @IsString()
   @IsOptional()
   worldProfilePic?: string | null;
+
+  @IsString()
+  @IsOptional()
+  name?: string | null;
 }
 
 export class GetUserActivitiesDto {
