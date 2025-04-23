@@ -120,7 +120,6 @@ export class PollService {
     const skip = (page - 1) * limit;
     const now = new Date();
     const filters: Prisma.PollWhereInput = {};
-    let userId: number | undefined;
 
     if (isActive) {
       filters.startDate = { lte: now };
@@ -131,19 +130,16 @@ export class PollService {
       filters.OR = [{ startDate: { gt: now } }, { endDate: { lte: now } }];
     }
 
-    if ((userCreated || userVoted) && worldID) {
-      const user = await this.databaseService.user.findUnique({
-        where: { worldID },
-        select: { id: true },
-      });
+    const user = await this.databaseService.user.findUnique({
+      where: { worldID },
+      select: { id: true },
+    });
 
-      if (!user) {
-        throw new UserNotFoundException();
-      }
-      userId = user.id;
-    } else if (userCreated || userVoted) {
-      throw new BadRequestException('worldId Not Provided');
+    if (!user) {
+      throw new UserNotFoundException();
     }
+
+    const userId = user.id;
 
     if (userCreated && userVoted) {
       const userVotes = await this.databaseService.vote.findMany({
@@ -189,6 +185,10 @@ export class PollService {
         where: filters,
         include: {
           author: true,
+          votes: {
+            where: { userId },
+            select: { voteID: true },
+          },
         },
         orderBy,
         skip,
@@ -197,7 +197,19 @@ export class PollService {
       this.databaseService.poll.count({ where: filters }),
     ]);
 
-    return { polls, total };
+    const pollsWithVoteStatus = polls.map((poll) => {
+      const { votes, ...pollWithoutVotes } = poll;
+
+      return {
+        ...pollWithoutVotes,
+        hasVoted: votes.length > 0,
+      };
+    });
+
+    return {
+      polls: pollsWithVoteStatus,
+      total,
+    };
   }
 
   async getPollDetails(id: number) {
