@@ -16,7 +16,7 @@ export class UserDetailsDto {
 
   @IsOptional()
   @IsString()
-  profilePicture: string;
+  profilePictureUrl: string;
 }
 export class VerifyWorldIdDto {
   @IsNotEmpty()
