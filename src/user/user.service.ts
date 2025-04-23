@@ -108,6 +108,8 @@ export class UserService {
       select: {
         id: true,
         worldID: true,
+        name: true,
+        profilePicture: true,
         pollsCreatedCount: true,
         pollsParticipatedCount: true,
       },
@@ -119,7 +121,8 @@ export class UserService {
       pollsCreated: user.pollsCreatedCount,
       pollsParticipated: user.pollsParticipatedCount,
       worldID: user.worldID,
-      worldProfilePic: null,
+      worldProfilePic: user.profilePicture,
+      name: user.name,
     };
   }
 
