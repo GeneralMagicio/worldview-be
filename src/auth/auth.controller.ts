@@ -59,7 +59,7 @@ export class AuthController {
       const user = await this.authService.createUser(
         worldID,
         userDetails.username,
-        userDetails.profilePicture,
+        userDetails.profilePictureUrl,
       );
 
       const token = this.jwtService.sign({
