@@ -185,7 +185,7 @@ export class UserService {
       userActions.map(async (action) => {
         const author = await this.databaseService.user.findUnique({
           where: { id: action.poll.authorUserId },
-          select: { worldID: true },
+          select: { worldID: true, name: true, profilePicture: true },
         });
         return {
           id: action.id,
@@ -197,6 +197,8 @@ export class UserService {
           isActive: action.poll.endDate >= now,
           votersParticipated: action.poll.participantCount,
           authorWorldId: author?.worldID || '',
+          authorName: author?.name || '',
+          authorProfilePic: author?.profilePicture || null,
           createdAt: action.createdAt.toISOString(),
         };
       }),
