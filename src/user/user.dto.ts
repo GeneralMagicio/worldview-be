@@ -84,6 +84,13 @@ export class UserActionDto {
   @IsString()
   authorWorldId: string;
 
+  @IsString()
+  authorName: string;
+
+  @IsString()
+  @IsOptional()
+  authorProfilePic?: string | null;
+
   @IsDateString()
   createdAt: string;
 }
