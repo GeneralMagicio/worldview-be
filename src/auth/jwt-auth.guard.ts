@@ -40,10 +40,11 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid token');
     }
 
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.replaceAll('Bearer ', '').trim();
 
     try {
-      const payload: JwtPayload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify(token) as JwtPayload;
+
       request.user = payload;
       return true;
     } catch (err) {
