@@ -47,9 +47,25 @@ export class GetUserActivitiesDto {
   @IsNotEmpty()
   worldID: string;
 
-  @IsEnum(['active', 'inactive', 'created', 'participated'])
   @IsOptional()
-  filter?: 'active' | 'inactive' | 'created' | 'participated';
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  isInactive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  isCreated?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  isParticipated?: boolean;
 
   @IsString()
   @IsOptional()
