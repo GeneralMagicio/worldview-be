@@ -29,20 +29,6 @@ import {
   UserVotesResponseDto,
 } from './user.dto';
 
-type UserActionFilters = {
-  userId: number;
-  type?: ActionType;
-  poll?: {
-    endDate?: {
-      gte?: Date;
-      lt?: Date;
-    };
-    pollId?: {
-      in?: number[];
-    };
-  };
-};
-
 @Injectable()
 export class UserService {
   constructor(
@@ -136,29 +122,50 @@ export class UserService {
     if (!user) {
       throw new UserNotFoundException();
     }
-    const filters: UserActionFilters = { userId: user.id };
+
+    const filters: Prisma.UserActionWhereInput = { userId: user.id };
     const now = new Date();
-    if (dto.filter === 'active') {
-      filters.poll = { endDate: { gte: now } };
-    } else if (dto.filter === 'inactive') {
-      filters.poll = { endDate: { lt: now } };
-    } else if (dto.filter === 'created') {
-      filters.type = ActionType.CREATED;
-    } else if (dto.filter === 'participated') {
-      filters.type = ActionType.VOTED;
+
+    if (dto.isActive || dto.isInactive) {
+      if (dto.isActive && !dto.isInactive) {
+        filters.poll = { endDate: { gte: now } };
+      } else if (!dto.isActive && dto.isInactive) {
+        filters.poll = { endDate: { lt: now } };
+      }
+      // If both are true or both are false, don't filter by activity status
     }
+
+    if (dto.isCreated || dto.isParticipated) {
+      if (dto.isCreated && !dto.isParticipated) {
+        filters.type = ActionType.CREATED;
+      } else if (!dto.isCreated && dto.isParticipated) {
+        filters.type = ActionType.VOTED;
+      } else if (dto.isCreated && dto.isParticipated) {
+        filters.OR = [{ type: ActionType.CREATED }, { type: ActionType.VOTED }];
+      }
+    }
+
     let pollIds: number[] | undefined;
     if (dto.search) {
       pollIds = await this.pollService['searchPolls'](dto.search);
-    }
-    if (pollIds && pollIds.length > 0) {
+
+      if (pollIds.length === 0) {
+        return { userActions: [] };
+      }
+
+      // Add poll IDs to the filter
       if (filters.poll) {
         filters.poll.pollId = { in: pollIds };
-      } else {
+      } else if (!filters.OR) {
+        // Only add if we're not already using OR for types
         filters.poll = { pollId: { in: pollIds } };
+      } else {
+        // We have OR condition for types, need to add poll filter to each
+        filters.OR = filters.OR.map((condition) => ({
+          ...condition,
+          poll: { pollId: { in: pollIds } },
+        }));
       }
-    } else if (pollIds && pollIds.length === 0) {
-      return { userActions: [] };
     }
 
     const userActions = await this.databaseService.userAction.findMany({
@@ -180,6 +187,7 @@ export class UserService {
         },
       },
     });
+
     const actions: UserActionDto[] = await Promise.all(
       // TODO: it's a temporary work around, should add authorWorldId to UserAction later
       userActions.map(async (action) => {
