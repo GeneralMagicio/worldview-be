@@ -167,7 +167,8 @@ export class PollService {
     if (search) {
       const pollIds = await this.searchPolls(search);
       if (Object.keys(filters).length > 0) {
-        filters.AND = [filters, { pollId: { in: pollIds } }];
+        const currentFilters = { ...filters };
+        filters.AND = [currentFilters, { pollId: { in: pollIds } }];
       } else {
         filters.pollId = { in: pollIds };
       }
