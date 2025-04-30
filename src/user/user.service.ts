@@ -119,6 +119,7 @@ export class UserService {
       where: { worldID: dto.worldID },
       select: { id: true },
     });
+
     if (!user) {
       throw new UserNotFoundException();
     }
