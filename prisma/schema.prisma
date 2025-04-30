@@ -1,68 +1,64 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id                      Int   @id @default(autoincrement())
-  worldID                 String   @unique
-  name                    String
-  profilePicture          String?
-  pollsCreatedCount       Int      @default(0)
-  pollsParticipatedCount  Int      @default(0)
-  createdPolls            Poll[]   @relation("PollAuthor")
-  votes                   Vote[]
-  actions                 UserAction[]
+  id                     Int          @id @default(autoincrement())
+  worldID                String       @unique
+  name                   String
+  profilePicture         String?
+  pollsCreatedCount      Int          @default(0)
+  pollsParticipatedCount Int          @default(0)
+  createdPolls           Poll[]       @relation("PollAuthor")
+  actions                UserAction[]
+  votes                  Vote[]
 }
 
 model UserAction {
-  id        Int   @id @default(autoincrement())
-  userId   Int
-  actionID  String   @unique
-  pollId  Int
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  pollId    Int
   type      ActionType
-  user      User     @relation(fields: [userId], references: [id])
-  poll      Poll       @relation(fields: [pollId], references: [pollId])
- 
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+  poll      Poll       @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id])
 }
 
 model Poll {
-  pollId           Int   @id @default(autoincrement())
+  pollId           Int                      @id @default(autoincrement())
   authorUserId     Int
   title            String
   description      String?
   options          String[]
-  creationDate     DateTime @default(now())
+  creationDate     DateTime                 @default(now())
   startDate        DateTime
-  endDate          DateTime 
+  endDate          DateTime
   tags             String[]
-  isAnonymous      Boolean  @default(false)
-  participantCount Int      @default(0)
+  isAnonymous      Boolean                  @default(false)
+  participantCount Int                      @default(0)
   voteResults      Json
-  author          User      @relation("PollAuthor", fields: [authorUserId], references: [id])
-  votes           Vote[]
+  searchVector     Unsupported("tsvector")?
+  author           User                     @relation("PollAuthor", fields: [authorUserId], references: [id])
   userAction       UserAction[]
+  votes            Vote[]
 }
 
 model Vote {
-  voteID            String   @id @default(uuid())
-  userId           Int
-  pollId            Int
-  votingPower       Int
+  voteID             String @id @default(uuid())
+  userId             Int
+  pollId             Int
+  votingPower        Int
   weightDistribution Json
-  proof             String
-  user             User     @relation(fields: [userId], references: [id])
-  poll             Poll     @relation(fields: [pollId], references: [pollId])
+  proof              String
+  quadraticWeights   Json?  @default(dbgenerated("calculate_quadratic_weights(\"weightDistribution\")"))
+  poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  user               User   @relation(fields: [userId], references: [id])
 }
 
 enum ActionType {

@@ -1,35 +1,44 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  Req,
+  Get,
+  Param,
+  Post,
   Query,
 } from '@nestjs/common';
-import { PollService } from './poll.service';
-import { Prisma } from '@prisma/client';
 import { CreatePollDto, GetPollsDto } from './Poll.dto';
+import { PollService } from './poll.service';
+import { User } from 'src/auth/user.decorator';
 
 @Controller('poll')
 export class PollController {
   constructor(private readonly pollService: PollService) {}
 
   @Post()
-  create(@Body() createPollDto: CreatePollDto) {
-    let userId = 1; // need to implement Auth
-    return this.pollService.createPoll(userId, createPollDto);
+  async createPoll(
+    @Body() dto: CreatePollDto,
+    @User('worldID') worldID: string,
+  ) {
+    return await this.pollService.createPoll(dto, worldID);
   }
 
   @Get()
-  getPolls(@Req() req, @Query() query: GetPollsDto) {
-    const userId = 1;
-    return this.pollService.getPolls(userId, query);
+  async getPolls(
+    @Query() query: GetPollsDto,
+    @User('worldID') worldID: string,
+  ) {
+    return await this.pollService.getPolls(query, worldID);
   }
 
   @Get(':id')
-  getPollDetails(@Param('id') id: string) {
-    return this.pollService.getPollDetails(Number(id));
+  async getPollDetails(@Param('id') id: number) {
+    return await this.pollService.getPollDetails(Number(id));
+  }
+
+  @Delete(':id')
+  async deletePoll(@Param('id') id: number, @User('worldID') worldID: string) {
+    const poll = await this.pollService.deletePoll(Number(id), worldID);
+    return { message: 'Poll deleted', poll };
   }
 }
