@@ -53,6 +53,7 @@ export class PollService {
     return searchResults.map((result) => result.pollId);
   }
 
+  // Should be used only for creatingpublished polls
   async createPoll(createPollDto: CreatePollDto, worldID: string) {
     const user = await this.databaseService.user.findUnique({
       where: { worldID },

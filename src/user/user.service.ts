@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ActionType, Prisma } from '@prisma/client';
+import { ActionType, PollStatus, Prisma } from '@prisma/client';
 import { VOTING_POWER } from '../common/constants';
 import {
   CreateUserException,
@@ -124,16 +124,27 @@ export class UserService {
       throw new UserNotFoundException();
     }
 
-    const filters: Prisma.UserActionWhereInput = { userId: user.id };
+    const filters: Prisma.UserActionWhereInput = {
+      userId: user.id,
+      poll: { status: PollStatus.PUBLISHED },
+    };
     const now = new Date();
 
     if (dto.isActive || dto.isInactive) {
       if (dto.isActive && !dto.isInactive) {
-        filters.poll = { endDate: { gte: now } };
+        filters.poll = {
+          status: PollStatus.PUBLISHED,
+          endDate: { gte: now },
+        };
       } else if (!dto.isActive && dto.isInactive) {
-        filters.poll = { endDate: { lt: now } };
+        filters.poll = {
+          status: PollStatus.PUBLISHED,
+          endDate: { lt: now },
+        };
+      } else {
+        // If both are true or both are false, only filter by status
+        filters.poll = { status: PollStatus.PUBLISHED };
       }
-      // If both are true or both are false, don't filter by activity status
     }
 
     if (dto.isCreated || dto.isParticipated) {
@@ -200,10 +211,10 @@ export class UserService {
           id: action.id,
           type: action.type,
           pollId: action.poll.pollId,
-          pollTitle: action.poll.title,
+          pollTitle: action.poll.title || '',
           pollDescription: action.poll.description ?? '',
-          endDate: action.poll.endDate.toISOString(),
-          isActive: action.poll.endDate >= now,
+          endDate: action.poll.endDate ? action.poll.endDate.toISOString() : '',
+          isActive: action.poll.endDate ? action.poll.endDate >= now : false,
           votersParticipated: action.poll.participantCount,
           authorWorldId: author?.worldID || '',
           authorName: author?.name || '',
@@ -227,10 +238,13 @@ export class UserService {
       throw new UserNotFoundException();
     }
     const poll = await this.databaseService.poll.findUnique({
-      where: { pollId: dto.pollId },
+      where: {
+        pollId: dto.pollId,
+        status: PollStatus.PUBLISHED,
+      },
       select: { endDate: true, options: true },
     });
-    if (!poll || poll.endDate < new Date()) {
+    if (!poll || (poll.endDate && poll.endDate < new Date())) {
       throw new PollNotFoundException();
     }
     const vote = await this.databaseService.vote.findFirst({
@@ -264,10 +278,13 @@ export class UserService {
       throw new UserNotFoundException();
     }
     const poll = await this.databaseService.poll.findUnique({
-      where: { pollId: dto.pollId },
+      where: {
+        pollId: dto.pollId,
+        status: PollStatus.PUBLISHED,
+      },
       select: { endDate: true, options: true },
     });
-    if (!poll || poll.endDate < new Date()) {
+    if (!poll || (poll.endDate && poll.endDate < new Date())) {
       throw new PollNotFoundException();
     }
     this.validateWeightDistribution(dto.weightDistribution, poll.options);
@@ -314,15 +331,21 @@ export class UserService {
       where: { voteID: dto.voteID },
       select: {
         userId: true,
+        pollId: true,
         poll: {
-          select: { endDate: true, options: true },
+          select: { endDate: true, options: true, status: true },
         },
       },
     });
     if (!vote) {
       throw new VoteNotFoundException();
     }
-    if (vote.poll.endDate < new Date()) {
+
+    if (vote.poll.status !== PollStatus.PUBLISHED) {
+      throw new PollNotFoundException();
+    }
+
+    if (vote.poll.endDate && vote.poll.endDate < new Date()) {
       throw new PollNotFoundException();
     }
     // TODO: should add worldID to Vote later
