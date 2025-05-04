@@ -9,7 +9,9 @@ import {
   IsOptional,
   IsString,
   Min,
+  Validate,
 } from 'class-validator';
+import { IsPositiveInteger } from '../common/validators';
 
 export class CreatePollDto {
   @IsString()
@@ -41,6 +43,43 @@ export class CreatePollDto {
   @IsBoolean()
   @IsOptional()
   isAnonymous?: boolean;
+}
+
+export class DraftPollDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  options?: string[];
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isAnonymous?: boolean;
+
+  @IsOptional()
+  @Validate(IsPositiveInteger)
+  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  pollId?: number;
 }
 
 export class GetPollsDto {
