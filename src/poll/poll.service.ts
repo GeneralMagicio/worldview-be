@@ -271,8 +271,11 @@ export class PollService {
         const currentFilters = { ...filters };
         filters.AND = [currentFilters, { pollId: { in: pollIds } }];
       } else {
-        // Add to existing AND condition
-        filters.AND.push({ pollId: { in: pollIds } });
+        // Add to existing AND condition by creating a new array
+        filters.AND = [
+          ...(filters.AND as Prisma.PollWhereInput[]),
+          { pollId: { in: pollIds } },
+        ];
       }
     }
 
