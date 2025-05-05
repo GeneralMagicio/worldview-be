@@ -152,24 +152,35 @@ export class PollService {
         data: updateData,
       });
     } else {
+      const pollData = {
+        authorUserId: user.id,
+        title: draftPollDto.title,
+        description: draftPollDto.description,
+        options: draftPollDto.options || [],
+        startDate: draftPollDto.startDate
+          ? new Date(draftPollDto.startDate)
+          : undefined,
+        endDate: draftPollDto.endDate
+          ? new Date(draftPollDto.endDate)
+          : undefined,
+        tags: draftPollDto.tags || [],
+        isAnonymous: draftPollDto.isAnonymous || false,
+        status: PollStatus.DRAFT,
+        voteResults: {},
+      };
+      const existingDraft = await this.databaseService.poll.findFirst({
+        where: { authorUserId: user.id, status: PollStatus.DRAFT },
+        select: { pollId: true },
+      });
+      if (existingDraft) {
+        return await this.databaseService.poll.update({
+          where: { pollId: existingDraft.pollId },
+          data: pollData,
+        });
+      }
       // Create new draft poll without default values
       return await this.databaseService.poll.create({
-        data: {
-          authorUserId: user.id,
-          title: draftPollDto.title,
-          description: draftPollDto.description,
-          options: draftPollDto.options || [],
-          startDate: draftPollDto.startDate
-            ? new Date(draftPollDto.startDate)
-            : undefined,
-          endDate: draftPollDto.endDate
-            ? new Date(draftPollDto.endDate)
-            : undefined,
-          tags: draftPollDto.tags || [],
-          isAnonymous: draftPollDto.isAnonymous || false,
-          status: PollStatus.DRAFT,
-          voteResults: {},
-        },
+        data: pollData,
       });
     }
   }
