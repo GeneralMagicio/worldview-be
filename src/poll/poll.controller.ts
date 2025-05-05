@@ -4,12 +4,13 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { CreatePollDto, GetPollsDto } from './Poll.dto';
-import { PollService } from './poll.service';
 import { User } from 'src/auth/user.decorator';
+import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
+import { PollService } from './poll.service';
 
 @Controller('poll')
 export class PollController {
@@ -21,6 +22,19 @@ export class PollController {
     @User('worldID') worldID: string,
   ) {
     return await this.pollService.createPoll(dto, worldID);
+  }
+
+  @Patch('draft')
+  async patchDraftPoll(
+    @Body() dto: DraftPollDto,
+    @User('worldID') worldID: string,
+  ) {
+    return await this.pollService.patchDraftPoll(dto, worldID);
+  }
+
+  @Get('draft')
+  async getDraftPoll(@User('worldID') worldID: string) {
+    return await this.pollService.getUserDraftPoll(worldID);
   }
 
   @Get()
