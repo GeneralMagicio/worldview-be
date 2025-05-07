@@ -10,7 +10,7 @@ datasource db {
 model User {
   id                     Int          @id @default(autoincrement())
   worldID                String       @unique
-  name                   String
+  name                   String?
   profilePicture         String?
   pollsCreatedCount      Int          @default(0)
   pollsParticipatedCount Int          @default(0)
