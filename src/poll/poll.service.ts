@@ -112,7 +112,7 @@ export class PollService {
       throw new UserNotFoundException();
     }
 
-    // Create new draft or update existing one
+    // Handle case with specified pollId
     if (draftPollDto.pollId) {
       // Update existing draft
       const existingPoll = await this.databaseService.poll.findUnique({
@@ -152,35 +152,52 @@ export class PollService {
         data: updateData,
       });
     } else {
-      const pollData = {
-        authorUserId: user.id,
-        title: draftPollDto.title,
-        description: draftPollDto.description,
-        options: draftPollDto.options || [],
-        startDate: draftPollDto.startDate
-          ? new Date(draftPollDto.startDate)
-          : undefined,
-        endDate: draftPollDto.endDate
-          ? new Date(draftPollDto.endDate)
-          : undefined,
-        tags: draftPollDto.tags || [],
-        isAnonymous: draftPollDto.isAnonymous || false,
-        status: PollStatus.DRAFT,
-        voteResults: {},
-      };
-      const existingDraft = await this.databaseService.poll.findFirst({
-        where: { authorUserId: user.id, status: PollStatus.DRAFT },
-        select: { pollId: true },
-      });
-      if (existingDraft) {
-        return await this.databaseService.poll.update({
-          where: { pollId: existingDraft.pollId },
-          data: pollData,
+      // For new drafts, use a transaction
+      return this.databaseService.$transaction(async (tx) => {
+        // Find existing drafts (if any)
+        const existingDrafts = await tx.poll.findMany({
+          where: { authorUserId: user.id, status: PollStatus.DRAFT },
+          select: { pollId: true },
+          orderBy: { creationDate: 'desc' },
         });
-      }
-      // Create new draft poll without default values
-      return await this.databaseService.poll.create({
-        data: pollData,
+
+        // Prepare poll data
+        const pollData = {
+          authorUserId: user.id,
+          title: draftPollDto.title,
+          description: draftPollDto.description,
+          options: draftPollDto.options || [],
+          startDate: draftPollDto.startDate
+            ? new Date(draftPollDto.startDate)
+            : undefined,
+          endDate: draftPollDto.endDate
+            ? new Date(draftPollDto.endDate)
+            : undefined,
+          tags: draftPollDto.tags || [],
+          isAnonymous: draftPollDto.isAnonymous || false,
+          status: PollStatus.DRAFT,
+          voteResults: {},
+        };
+
+        // Clean up multiple drafts if found
+        if (existingDrafts.length > 1) {
+          // Delete all but the most recent draft
+          for (let i = 1; i < existingDrafts.length; i++) {
+            await tx.poll.delete({
+              where: { pollId: existingDrafts[i].pollId },
+            });
+          }
+        }
+
+        // Update existing draft or create new one
+        if (existingDrafts.length > 0) {
+          return await tx.poll.update({
+            where: { pollId: existingDrafts[0].pollId },
+            data: pollData,
+          });
+        } else {
+          return await tx.poll.create({ data: pollData });
+        }
       });
     }
   }
