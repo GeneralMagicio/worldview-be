@@ -14,6 +14,8 @@ import {
 } from '../common/exceptions';
 import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
 
+const IS_VOTE_NORMALIZATION = process.env.ENABLE_VOTE_NORMALIZATION === 'true';
+
 @Injectable()
 export class PollService {
   constructor(
@@ -449,9 +451,12 @@ export class PollService {
     if (!poll) {
       throw new PollNotFoundException();
     }
+    const select = IS_VOTE_NORMALIZATION
+      ? { normalizedQuadraticWeights: true }
+      : { quadraticWeights: true };
     const votes = await this.databaseService.vote.findMany({
       where: { pollId },
-      select: { quadraticWeights: true },
+      select,
     });
     const result: Record<string, number> = poll.options.reduce(
       (acc, option) => {
@@ -461,12 +466,16 @@ export class PollService {
       {} as Record<string, number>,
     );
     votes.forEach((vote) => {
-      if (vote.quadraticWeights) {
-        Object.entries(vote.quadraticWeights as Record<string, number>).forEach(
-          ([option, weight]) => {
+      const weights = IS_VOTE_NORMALIZATION
+        ? vote.normalizedQuadraticWeights
+        : vote.quadraticWeights;
+
+      if (weights && typeof weights === 'object') {
+        Object.entries(weights).forEach(([option, weight]) => {
+          if (typeof weight === 'number') {
             result[option] = (result[option] || 0) + weight;
-          },
-        );
+          }
+        });
       }
     });
     return result;
