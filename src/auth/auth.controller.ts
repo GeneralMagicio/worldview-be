@@ -64,12 +64,7 @@ export class AuthController {
       throw new SignatureVerificationFailureException();
     }
 
-    console.log('verificationLevel 1', verificationLevel);
-    console.log('systemVerificationLevel 1', this.systemVerificationLevel);
-
     if (verificationLevel !== this.systemVerificationLevel) {
-      console.log('verificationLevel 2', verificationLevel);
-      console.log('systemVerificationLevel 2', this.systemVerificationLevel);
       throw new InsufficientVerificationLevelException();
     }
 
