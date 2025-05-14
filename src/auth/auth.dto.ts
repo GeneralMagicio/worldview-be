@@ -2,13 +2,15 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsEnum,
   ValidateNested,
 } from 'class-validator';
 import {
   MiniAppWalletAuthSuccessPayload,
   ISuccessResult,
+  VerificationLevel,
 } from '@worldcoin/minikit-js';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class UserDetailsDto {
   @IsString()
@@ -37,4 +39,18 @@ export class VerifyWorldIdDto {
   @IsNotEmpty()
   @IsString()
   nonce: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      value = value.toLowerCase();
+    }
+    return Object.values(VerificationLevel).includes(value as VerificationLevel)
+      ? (value as VerificationLevel)
+      : VerificationLevel.Device;
+  })
+  @IsEnum(VerificationLevel, {
+    message: `Verification level must be one of: ${Object.values(VerificationLevel).join(', ')}`,
+  })
+  verificationLevel: VerificationLevel = VerificationLevel.Device;
 }

@@ -59,3 +59,9 @@ export class JwtVerificationFailureException extends HttpException {
     super(message, HttpStatus.BAD_REQUEST);
   }
 }
+
+export class InsufficientVerificationLevelException extends HttpException {
+  constructor(message = 'Insufficient verification level') {
+    super(message, HttpStatus.UNAUTHORIZED);
+  }
+}

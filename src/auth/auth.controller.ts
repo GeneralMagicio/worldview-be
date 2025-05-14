@@ -4,9 +4,12 @@ import { AuthService } from './auth.service';
 import { JwtService } from './jwt.service';
 import { Public } from './jwt-auth.guard';
 import { VerifyWorldIdDto } from './auth.dto';
-import { SignatureVerificationFailureException } from 'src/common/exceptions';
+import {
+  InsufficientVerificationLevelException,
+  SignatureVerificationFailureException,
+} from 'src/common/exceptions';
 import { BadRequestException } from '@nestjs/common';
-
+import { VerificationLevel } from '@worldcoin/minikit-js';
 function isHttps(req: Request) {
   return (
     req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
@@ -15,10 +18,16 @@ function isHttps(req: Request) {
 
 @Controller('auth')
 export class AuthController {
+  private readonly systemVerificationLevel: VerificationLevel;
+
   constructor(
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.systemVerificationLevel =
+      (process.env.VERIFICATION_LEVEL?.toLowerCase() as VerificationLevel) ||
+      VerificationLevel.Device;
+  }
 
   @Public()
   @Get('nonce')
@@ -41,39 +50,48 @@ export class AuthController {
     @Body() body: VerifyWorldIdDto,
     @Res() res: Response,
   ) {
-    const { walletPayload, worldIdProof, userDetails, nonce } = body;
+    const {
+      walletPayload,
+      worldIdProof,
+      userDetails,
+      nonce,
+      verificationLevel,
+    } = body;
 
-    try {
-      const isValid = await this.authService.verifyPayload(
-        walletPayload,
-        nonce,
-      );
+    const isValid = await this.authService.verifyPayload(walletPayload, nonce);
 
-      if (!isValid) {
-        throw new SignatureVerificationFailureException();
-      }
-
-      const worldID = worldIdProof?.nullifier_hash;
-      const walletAddress = walletPayload?.address;
-
-      const user = await this.authService.createUser(
-        worldID,
-        userDetails.username,
-        userDetails.profilePictureUrl,
-      );
-
-      const token = this.jwtService.sign({
-        userId: user.id,
-        worldID,
-        address: walletAddress,
-      });
-
-      return res.status(200).json({ isValid: true, token });
-    } catch (error) {
-      console.error(error);
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'Unknown error',
-      );
+    if (!isValid) {
+      throw new SignatureVerificationFailureException();
     }
+
+    if (verificationLevel !== this.systemVerificationLevel) {
+      throw new InsufficientVerificationLevelException();
+    }
+
+    const worldID = worldIdProof?.nullifier_hash;
+    const walletAddress = walletPayload?.address;
+
+    const user = await this.authService.createUser(
+      worldID,
+      userDetails.username,
+      userDetails.profilePictureUrl,
+    );
+
+    if (!user) {
+      throw new BadRequestException('Failed to create user');
+    }
+
+    const token = this.jwtService.sign({
+      userId: user.id,
+      worldID,
+      verificationLevel,
+      address: walletAddress,
+    });
+
+    if (!token) {
+      throw new BadRequestException('Failed to generate token');
+    }
+
+    return res.status(200).json({ isValid: true, token });
   }
 }

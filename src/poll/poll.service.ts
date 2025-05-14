@@ -64,12 +64,6 @@ export class PollService {
     const endDate = new Date(createPollDto.endDate);
     const now = new Date();
 
-    console.log('date', {
-      checkDate,
-      startDate,
-      now,
-    });
-
     if (checkDate < now) {
       throw new BadRequestException('Start date cannot be in the past');
     }
