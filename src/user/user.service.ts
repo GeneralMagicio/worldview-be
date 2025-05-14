@@ -19,6 +19,7 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
+  GetUserCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -406,5 +407,22 @@ export class UserService {
         userId: newUser.id,
       };
     });
+  }
+
+  async getUserCount(query: GetUserCountDto): Promise<number> {
+    const { from, to } = query;
+    const where: Prisma.UserWhereInput = {};
+
+    console.log(from, to);
+
+    if (from) {
+      where.createdAt = { gte: new Date(from) };
+    }
+
+    if (to) {
+      where.createdAt = { lte: new Date(to) };
+    }
+
+    return await this.databaseService.user.count({ where });
   }
 }

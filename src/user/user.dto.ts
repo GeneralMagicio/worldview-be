@@ -10,6 +10,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Validate,
 } from 'class-validator';
 import { IsPositiveInteger, IsRecordStringNumber } from '../common/validators';
@@ -196,4 +197,16 @@ export class CreateUserResponseDto {
   @IsNotEmpty()
   @IsNumber()
   userId: number;
+}
+
+export class GetUserCountDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  from?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  to?: string;
 }

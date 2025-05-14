@@ -5,6 +5,7 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
+  GetUserCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -15,6 +16,7 @@ import {
 } from './user.dto';
 import { UserService } from './user.service';
 import { User } from 'src/auth/user.decorator';
+import { Public } from 'src/auth/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -61,5 +63,11 @@ export class UserController {
   @Post('createUser')
   async createUser(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
     return await this.userService.createUser(dto);
+  }
+
+  @Get('userCount')
+  @Public()
+  async getUserCount(@Query() query: GetUserCountDto): Promise<number> {
+    return await this.userService.getUserCount(query);
   }
 }
