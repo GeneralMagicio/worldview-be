@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ActionType, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { GetCountDto } from 'src/user/user.dto';
+import { GetCountDto } from '../common/common.dto';
 
 @Injectable()
 export class VoteService {

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Public } from 'src/auth/jwt-auth.guard';
-import { GetCountDto } from 'src/user/user.dto';
+import { GetCountDto } from '../common/common.dto';
 import { VoteService } from './vote.service';
 
 @Controller('vote')

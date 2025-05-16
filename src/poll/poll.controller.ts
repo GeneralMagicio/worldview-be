@@ -12,7 +12,7 @@ import { User } from 'src/auth/user.decorator';
 import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
 import { Public } from 'src/auth/jwt-auth.guard';
-import { GetCountDto } from 'src/user/user.dto';
+import { GetCountDto } from '../common/common.dto';
 
 @Controller('poll')
 export class PollController {

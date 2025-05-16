@@ -5,7 +5,6 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
-  GetCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -17,6 +16,7 @@ import {
 import { UserService } from './user.service';
 import { User } from 'src/auth/user.decorator';
 import { Public } from 'src/auth/jwt-auth.guard';
+import { GetCountDto } from '../common/common.dto';
 
 @Controller('user')
 export class UserController {

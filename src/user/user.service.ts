@@ -19,7 +19,6 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
-  GetCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -29,6 +28,7 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
+import { GetCountDto } from '../common/common.dto';
 
 @Injectable()
 export class UserService {
