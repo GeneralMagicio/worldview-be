@@ -413,13 +413,11 @@ export class UserService {
     const { from, to } = query;
     const where: Prisma.UserWhereInput = {};
 
-    console.log(from, to);
-
-    if (from) {
+    if (from && to) {
+      where.createdAt = { gte: new Date(from), lte: new Date(to) };
+    } else if (from) {
       where.createdAt = { gte: new Date(from) };
-    }
-
-    if (to) {
+    } else if (to) {
       where.createdAt = { lte: new Date(to) };
     }
 

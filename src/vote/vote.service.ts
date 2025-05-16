@@ -11,16 +11,16 @@ export class VoteService {
     const { from, to } = query;
     const where: Prisma.UserActionWhereInput = { type: ActionType.VOTED };
 
-    if (from) {
-      where.createdAt = { gte: from };
-    }
-
-    if (to) {
-      where.createdAt = { lte: to };
+    if (from && to) {
+      where.createdAt = { gte: new Date(from), lte: new Date(to) };
+    } else if (from) {
+      where.createdAt = { gte: new Date(from) };
+    } else if (to) {
+      where.createdAt = { lte: new Date(to) };
     }
 
     return await this.databaseService.userAction.count({
-      where: { type: ActionType.VOTED },
+      where,
     });
   }
 }

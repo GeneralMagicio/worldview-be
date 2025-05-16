@@ -491,11 +491,11 @@ export class PollService {
     const { from, to } = query;
     const where: Prisma.PollWhereInput = {};
 
-    if (from) {
+    if (from && to) {
+      where.creationDate = { gte: new Date(from), lte: new Date(to) };
+    } else if (from) {
       where.creationDate = { gte: new Date(from) };
-    }
-
-    if (to) {
+    } else if (to) {
       where.creationDate = { lte: new Date(to) };
     }
 
