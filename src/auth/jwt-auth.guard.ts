@@ -31,7 +31,6 @@ export class JwtAuthGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    console.log(isPublic);
     if (isPublic) {
       return true;
     }
