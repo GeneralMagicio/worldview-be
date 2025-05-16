@@ -11,6 +11,8 @@ import {
 import { User } from 'src/auth/user.decorator';
 import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
 import { PollService } from './poll.service';
+import { Public } from 'src/auth/jwt-auth.guard';
+import { GetCountDto } from 'src/user/user.dto';
 
 @Controller('poll')
 export class PollController {
@@ -43,6 +45,12 @@ export class PollController {
     @User('worldID') worldID: string,
   ) {
     return await this.pollService.getPolls(query, worldID);
+  }
+
+  @Get('count')
+  @Public()
+  async getPollsCount(@Query() query: GetCountDto): Promise<number> {
+    return await this.pollService.getPollsCount(query);
   }
 
   @Get(':id')

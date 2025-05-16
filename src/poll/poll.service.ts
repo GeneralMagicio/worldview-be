@@ -12,7 +12,13 @@ import {
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions';
-import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
+import {
+  CreatePollDto,
+  DraftPollDto,
+  GetPollsDto,
+  GetPollsCountDto,
+} from './Poll.dto';
+import { GetCountDto } from 'src/user/user.dto';
 
 const IS_VOTE_NORMALIZATION = process.env.ENABLE_VOTE_NORMALIZATION === 'true';
 
@@ -479,5 +485,20 @@ export class PollService {
       }
     });
     return result;
+  }
+
+  async getPollsCount(query: GetPollsCountDto): Promise<number> {
+    const { from, to } = query;
+    const where: Prisma.PollWhereInput = {};
+
+    if (from) {
+      where.creationDate = { gte: new Date(from) };
+    }
+
+    if (to) {
+      where.creationDate = { lte: new Date(to) };
+    }
+
+    return await this.databaseService.poll.count({ where });
   }
 }

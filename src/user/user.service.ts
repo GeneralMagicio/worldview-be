@@ -19,7 +19,7 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
-  GetUserCountDto,
+  GetCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -409,7 +409,7 @@ export class UserService {
     });
   }
 
-  async getUserCount(query: GetUserCountDto): Promise<number> {
+  async getUserCount(query: GetCountDto): Promise<number> {
     const { from, to } = query;
     const where: Prisma.UserWhereInput = {};
 

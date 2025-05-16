@@ -5,7 +5,7 @@ import {
   EditVoteDto,
   EditVoteResponseDto,
   GetUserActivitiesDto,
-  GetUserCountDto,
+  GetCountDto,
   GetUserDataDto,
   GetUserVotesDto,
   SetVoteDto,
@@ -65,9 +65,9 @@ export class UserController {
     return await this.userService.createUser(dto);
   }
 
-  @Get('userCount')
+  @Get('count')
   @Public()
-  async getUserCount(@Query() query: GetUserCountDto): Promise<number> {
+  async getUserCount(@Query() query: GetCountDto): Promise<number> {
     return await this.userService.getUserCount(query);
   }
 }

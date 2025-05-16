@@ -199,7 +199,7 @@ export class CreateUserResponseDto {
   userId: number;
 }
 
-export class GetUserCountDto {
+export class GetCountDto {
   @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
