@@ -15,6 +15,8 @@ import {
 } from './user.dto';
 import { UserService } from './user.service';
 import { User } from 'src/auth/user.decorator';
+import { Public } from 'src/auth/jwt-auth.guard';
+import { GetCountDto } from '../common/common.dto';
 
 @Controller('user')
 export class UserController {
@@ -61,5 +63,11 @@ export class UserController {
   @Post('createUser')
   async createUser(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
     return await this.userService.createUser(dto);
+  }
+
+  @Get('count')
+  @Public()
+  async getUserCount(@Query() query: GetCountDto): Promise<number> {
+    return await this.userService.getUserCount(query);
   }
 }

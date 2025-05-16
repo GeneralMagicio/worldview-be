@@ -28,6 +28,7 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
+import { GetCountDto } from '../common/common.dto';
 
 @Injectable()
 export class UserService {
@@ -406,5 +407,20 @@ export class UserService {
         userId: newUser.id,
       };
     });
+  }
+
+  async getUserCount(query: GetCountDto): Promise<number> {
+    const { from, to } = query;
+    const where: Prisma.UserWhereInput = {};
+
+    if (from && to) {
+      where.createdAt = { gte: new Date(from), lte: new Date(to) };
+    } else if (from) {
+      where.createdAt = { gte: new Date(from) };
+    } else if (to) {
+      where.createdAt = { lte: new Date(to) };
+    }
+
+    return await this.databaseService.user.count({ where });
   }
 }

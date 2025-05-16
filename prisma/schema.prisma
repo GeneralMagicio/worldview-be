@@ -14,6 +14,7 @@ model User {
   profilePicture         String?
   pollsCreatedCount      Int          @default(0)
   pollsParticipatedCount Int          @default(0)
+  createdAt              DateTime     @default(now())
   createdPolls           Poll[]       @relation("PollAuthor")
   actions                UserAction[]
   votes                  Vote[]
