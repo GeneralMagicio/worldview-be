@@ -438,6 +438,51 @@ export class PollService {
     });
   }
 
+  async getPollVotes(pollId: number) {
+    const poll = await this.databaseService.poll.findUnique({
+      where: {
+        pollId,
+        status: PollStatus.PUBLISHED,
+        isAnonymous: false, // Only return votes for non-anonymous polls
+      },
+      select: {
+        pollId: true,
+      },
+    });
+
+    if (!poll) {
+      throw new PollNotFoundException();
+    }
+
+    const votes = await this.databaseService.vote.findMany({
+      where: { pollId },
+      select: {
+        quadraticWeights: true,
+        weightDistribution: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const formattedVotes = votes.map((vote) => {
+      const quadraticWeights = vote.quadraticWeights as Record<string, number>;
+      const totalQuadraticWeights = Object.values(quadraticWeights).reduce(
+        (sum, value) => sum + value,
+        0,
+      );
+      return {
+        username: vote.user.name,
+        quadraticWeights,
+        totalQuadraticWeights,
+      };
+    });
+
+    return { votes: formattedVotes };
+  }
+
   async getPollQuadraticResults(
     pollId: number,
   ): Promise<Record<string, number>> {

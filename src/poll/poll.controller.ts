@@ -50,6 +50,11 @@ export class PollController {
     return await this.pollService.getPollDetails(Number(id));
   }
 
+  @Get(':id/votes')
+  async getPollVotes(@Param('id') id: number) {
+    return await this.pollService.getPollVotes(Number(id));
+  }
+
   @Delete(':id')
   async deletePoll(@Param('id') id: number, @User('worldID') worldID: string) {
     const poll = await this.pollService.deletePoll(Number(id), worldID);
