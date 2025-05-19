@@ -122,3 +122,10 @@ export class GetPollsDto {
   @IsEnum(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
 }
+
+export class GetPollVotesDto {
+  @IsInt()
+  @Type(() => Number)
+  @IsNotEmpty()
+  pollId: number;
+}
