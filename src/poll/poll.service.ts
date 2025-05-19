@@ -13,6 +13,7 @@ import {
   UserNotFoundException,
 } from '../common/exceptions';
 import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
+import { GetCountDto } from '../common/common.dto';
 
 const IS_VOTE_NORMALIZATION = process.env.ENABLE_VOTE_NORMALIZATION === 'true';
 
@@ -479,5 +480,20 @@ export class PollService {
       }
     });
     return result;
+  }
+
+  async getPollsCount(query: GetCountDto): Promise<number> {
+    const { from, to } = query;
+    const where: Prisma.PollWhereInput = {};
+
+    if (from && to) {
+      where.creationDate = { gte: new Date(from), lte: new Date(to) };
+    } else if (from) {
+      where.creationDate = { gte: new Date(from) };
+    } else if (to) {
+      where.creationDate = { lte: new Date(to) };
+    }
+
+    return await this.databaseService.poll.count({ where });
   }
 }
