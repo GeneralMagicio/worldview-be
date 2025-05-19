@@ -56,7 +56,7 @@ export class PollService {
     return searchResults.map((result) => result.pollId);
   }
 
-  // Should be used only for creatingpublished polls
+  // Should be used only for creating published polls
   async createPoll(createPollDto: CreatePollDto, worldID: string) {
     const user = await this.databaseService.user.findUnique({
       where: { worldID },
@@ -77,6 +77,13 @@ export class PollService {
       throw new BadRequestException('End date must be after start date');
     }
     return this.databaseService.$transaction(async (tx) => {
+      // Delete all existing drafts
+      await tx.poll.deleteMany({
+        where: {
+          authorUserId: user.id,
+          status: PollStatus.DRAFT,
+        },
+      });
       const newPoll = await tx.poll.create({
         data: {
           authorUserId: user.id,
