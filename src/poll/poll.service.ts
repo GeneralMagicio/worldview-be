@@ -7,13 +7,13 @@ import {
 import { ActionType, PollStatus, Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { UserService } from 'src/user/user.service';
+import { GetCountDto } from '../common/common.dto';
 import {
   PollNotFoundException,
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions';
 import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
-import { GetCountDto } from '../common/common.dto';
 
 const IS_VOTE_NORMALIZATION = process.env.ENABLE_VOTE_NORMALIZATION === 'true';
 
@@ -461,26 +461,30 @@ export class PollService {
     if (!poll) {
       throw new PollNotFoundException();
     }
-
+    const select = IS_VOTE_NORMALIZATION
+      ? {
+          normalizedQuadraticWeights: true,
+          normalizedWeightDistribution: true,
+          user: { select: { worldID: true, name: true } },
+        }
+      : {
+          quadraticWeights: true,
+          weightDistribution: true,
+          user: { select: { worldID: true, name: true } },
+        };
     const votes = await this.databaseService.vote.findMany({
       where: { pollId },
-      select: {
-        quadraticWeights: true,
-        weightDistribution: true,
-        user: {
-          select: {
-            name: true,
-          },
-        },
-      },
+      select,
     });
 
     const formattedVotes = votes.map((vote) => {
-      const quadraticWeights = vote.quadraticWeights as Record<string, number>;
-      const totalQuadraticWeights = Object.values(quadraticWeights).reduce(
-        (sum, value) => sum + value,
-        0,
-      );
+      const quadraticWeights = IS_VOTE_NORMALIZATION
+        ? vote.normalizedQuadraticWeights
+        : vote.quadraticWeights;
+
+      const totalQuadraticWeights = Object.values(
+        quadraticWeights as Record<string, number>,
+      ).reduce((sum, value) => sum + value, 0);
       return {
         username: vote.user.name,
         quadraticWeights,
