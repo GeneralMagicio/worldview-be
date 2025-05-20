@@ -455,6 +455,7 @@ export class PollService {
       },
       select: {
         pollId: true,
+        title: true,
       },
     });
 
@@ -492,7 +493,11 @@ export class PollService {
       };
     });
 
-    return { votes: formattedVotes };
+    return {
+      votes: formattedVotes,
+      pollTitle: poll.title,
+      pollId: poll.pollId,
+    };
   }
 
   async getPollQuadraticResults(
