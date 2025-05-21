@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ActionType, PollStatus, Prisma } from '@prisma/client';
+import { GetCountDto } from '../common/common.dto';
 import { VOTING_POWER } from '../common/constants';
 import {
   CreateUserException,
@@ -28,7 +29,6 @@ import {
   UserDataResponseDto,
   UserVotesResponseDto,
 } from './user.dto';
-import { GetCountDto } from '../common/common.dto';
 
 @Injectable()
 export class UserService {
@@ -214,6 +214,7 @@ export class UserService {
           type: action.type,
           pollId: action.poll.pollId,
           pollTitle: action.poll.title || '',
+          isAnonymous: action.poll.isAnonymous,
           pollDescription: action.poll.description ?? '',
           endDate: action.poll.endDate ? action.poll.endDate.toISOString() : '',
           isActive: action.poll.endDate ? action.poll.endDate >= now : false,
