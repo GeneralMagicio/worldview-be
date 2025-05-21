@@ -318,43 +318,142 @@ export class PollService {
       }
     }
 
-    const orderBy: Prisma.PollOrderByWithRelationInput = {};
-    if (sortBy) {
-      orderBy[sortBy] = sortOrder;
-    } else {
-      orderBy.endDate = 'asc';
-    }
+    let orderBy: Prisma.PollOrderByWithRelationInput[] = [];
 
-    const [polls, total] = await this.databaseService.$transaction([
-      this.databaseService.poll.findMany({
-        where: filters,
-        include: {
-          author: true,
-          votes: {
-            where: { userId },
-            select: { voteID: true },
-          },
-        },
-        orderBy,
-        skip,
-        take: Number(limit),
-      }),
-      this.databaseService.poll.count({ where: filters }),
-    ]);
+    if (sortBy === 'endDate') {
+      const activeFilters = {
+        ...filters,
+        startDate: { lte: now },
+        endDate: { gt: now },
+      };
 
-    const pollsWithVoteStatus = polls.map((poll) => {
-      const { votes, ...pollWithoutVotes } = poll;
+      const inactiveFilters = {
+        ...filters,
+        OR: [{ startDate: { gt: now } }, { endDate: { lte: now } }],
+      };
+
+      const [activePolls, inactivePolls, total] =
+        await this.databaseService.$transaction([
+          this.databaseService.poll.findMany({
+            where: activeFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { endDate: sortOrder },
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.findMany({
+            where: inactiveFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { endDate: sortOrder },
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.count({ where: filters }),
+        ]);
+
+      const combinedPolls = [...activePolls, ...inactivePolls];
+
+      const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit));
+
+      const pollsWithVoteStatus = paginatedPolls.map((poll) => {
+        const { votes, ...pollWithoutVotes } = poll;
+
+        return {
+          ...pollWithoutVotes,
+          hasVoted: votes.length > 0,
+        };
+      });
 
       return {
-        ...pollWithoutVotes,
-        hasVoted: votes.length > 0,
+        polls: pollsWithVoteStatus,
+        total,
       };
-    });
+    } else if (sortBy) {
+      orderBy.push({
+        [sortBy]: sortOrder,
+      });
 
-    return {
-      polls: pollsWithVoteStatus,
-      total,
-    };
+      const [polls, total] = await this.databaseService.$transaction([
+        this.databaseService.poll.findMany({
+          where: filters,
+          include: {
+            author: true,
+            votes: {
+              where: { userId },
+              select: { voteID: true },
+            },
+          },
+          orderBy,
+          skip,
+          take: Number(limit),
+        }),
+        this.databaseService.poll.count({ where: filters }),
+      ]);
+
+      const pollsWithVoteStatus = polls.map((poll) => {
+        const { votes, ...pollWithoutVotes } = poll;
+
+        return {
+          ...pollWithoutVotes,
+          hasVoted: votes.length > 0,
+        };
+      });
+
+      return {
+        polls: pollsWithVoteStatus,
+        total,
+      };
+    } else {
+      orderBy = [
+        {
+          endDate: 'asc',
+        },
+        {
+          startDate: 'asc',
+        },
+      ];
+
+      const [polls, total] = await this.databaseService.$transaction([
+        this.databaseService.poll.findMany({
+          where: filters,
+          include: {
+            author: true,
+            votes: {
+              where: { userId },
+              select: { voteID: true },
+            },
+          },
+          orderBy,
+          skip,
+          take: Number(limit),
+        }),
+        this.databaseService.poll.count({ where: filters }),
+      ]);
+
+      const pollsWithVoteStatus = polls.map((poll) => {
+        const { votes, ...pollWithoutVotes } = poll;
+
+        return {
+          ...pollWithoutVotes,
+          hasVoted: votes.length > 0,
+        };
+      });
+
+      return {
+        polls: pollsWithVoteStatus,
+        total,
+      };
+    }
   }
 
   async getPollDetails(id: number) {
