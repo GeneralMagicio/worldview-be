@@ -193,6 +193,7 @@ export class UserService {
             pollId: true,
             title: true,
             description: true,
+            isAnonymous: true,
             endDate: true,
             authorUserId: true,
             participantCount: true,
