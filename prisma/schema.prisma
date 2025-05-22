@@ -14,6 +14,7 @@ model User {
   profilePicture         String?
   pollsCreatedCount      Int          @default(0)
   pollsParticipatedCount Int          @default(0)
+  createdAt              DateTime     @default(now())
   createdPolls           Poll[]       @relation("PollAuthor")
   actions                UserAction[]
   votes                  Vote[]
@@ -33,35 +34,43 @@ model UserAction {
 model Poll {
   pollId           Int                      @id @default(autoincrement())
   authorUserId     Int
-  title            String
+  title            String?
   description      String?
   options          String[]
   creationDate     DateTime                 @default(now())
-  startDate        DateTime
-  endDate          DateTime
+  startDate        DateTime?
+  endDate          DateTime?
   tags             String[]
   isAnonymous      Boolean                  @default(false)
   participantCount Int                      @default(0)
   voteResults      Json
   searchVector     Unsupported("tsvector")?
+  status           PollStatus               @default(PUBLISHED)
   author           User                     @relation("PollAuthor", fields: [authorUserId], references: [id])
   userAction       UserAction[]
   votes            Vote[]
 }
 
 model Vote {
-  voteID             String @id @default(uuid())
-  userId             Int
-  pollId             Int
-  votingPower        Int
-  weightDistribution Json
-  proof              String
-  quadraticWeights   Json?  @default(dbgenerated("calculate_quadratic_weights(\"weightDistribution\")"))
-  poll               Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
-  user               User   @relation(fields: [userId], references: [id])
+  voteID                       String @id @default(uuid())
+  userId                       Int
+  pollId                       Int
+  votingPower                  Int
+  weightDistribution           Json
+  proof                        String
+  quadraticWeights             Json?  @default(dbgenerated("calculate_quadratic_weights(\"weightDistribution\")"))
+  normalizedWeightDistribution Json?  @default(dbgenerated("json_normalize_weights(\"weightDistribution\", \"votingPower\")"))
+  normalizedQuadraticWeights   Json?  @default(dbgenerated("calculate_normalized_quadratic_weights(json_normalize_weights(\"weightDistribution\", \"votingPower\"))"))
+  poll                         Poll   @relation(fields: [pollId], references: [pollId], onDelete: Cascade)
+  user                         User   @relation(fields: [userId], references: [id])
 }
 
 enum ActionType {
   CREATED
   VOTED
+}
+
+enum PollStatus {
+  DRAFT
+  PUBLISHED
 }
