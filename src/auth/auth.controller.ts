@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common'
 import { Request, Response } from 'express'
-import { AuthService } from './auth.service'
-import { JwtService } from './jwt.service'
-import { Public } from './jwt-auth.guard'
-import { VerifyWorldIdDto } from './auth.dto'
 import {
   InsufficientVerificationLevelException,
   SignatureVerificationFailureException,
 } from 'src/common/exceptions'
 import { BadRequestException } from '@nestjs/common'
 import { VerificationLevel } from '@worldcoin/minikit-js'
+import { AuthService } from './auth.service'
+import { JwtService } from './jwt.service'
+import { Public } from './jwt-auth.guard'
+import { VerifyWorldIdDto } from './auth.dto'
 function isHttps(req: Request) {
   return (
     req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'

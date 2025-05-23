@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core'
-import { AppModule } from './app.module'
 import cookieParser from 'cookie-parser'
-import { JwtAuthGuard } from './auth/jwt-auth.guard'
 import { Reflector } from '@nestjs/core'
-import { JwtService } from './auth/jwt.service'
 import { ValidationPipe, BadRequestException } from '@nestjs/common'
+import { AppModule } from './app.module'
+import { JwtAuthGuard } from './auth/jwt-auth.guard'
+import { JwtService } from './auth/jwt.service'
 import { HttpExceptionFilter } from './common/http-exception.filter'
 
 async function bootstrap() {

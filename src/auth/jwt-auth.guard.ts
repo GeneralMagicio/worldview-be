@@ -8,8 +8,8 @@ import { SetMetadata } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
 import { VerificationLevel } from '@worldcoin/minikit-js'
-import { JwtService } from './jwt.service'
 import { InsufficientVerificationLevelException } from 'src/common/exceptions'
+import { JwtService } from './jwt.service'
 
 export const IS_PUBLIC_KEY = 'isPublic'
 
