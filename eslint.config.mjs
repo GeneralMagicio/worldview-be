@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['eslint.config.mjs', '.prettierrc'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -30,19 +30,7 @@ export default tseslint.config(
       import: eslintPluginImport,
     },
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          arrowParens: 'avoid',
-          singleQuote: true,
-          semi: false,
-          tabWidth: 2,
-          useTabs: false,
-          trailingComma: 'all',
-          'jsdoc-format': false,
-          endOfLine: 'auto'
-        }
-      ],
+      'prettier/prettier': 'error',
       'import/order': [
         'error',
         {

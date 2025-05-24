@@ -1,8 +1,8 @@
 {
-  "name": "qv-be",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "worldview-be",
+  "version": "0.1.0",
+  "description": "Worldview backend",
+  "author": "General Magic Contributors",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
