@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
+import * as crypto from 'crypto'
+import { Injectable } from '@nestjs/common'
 import {
   MiniAppWalletAuthSuccessPayload,
   verifySiweMessage,
   SiweMessage,
-} from '@worldcoin/minikit-js';
-import { DatabaseService } from 'src/database/database.service';
-import { CreateUserException } from 'src/common/exceptions';
+} from '@worldcoin/minikit-js'
+import { DatabaseService } from 'src/database/database.service'
+import { CreateUserException } from 'src/common/exceptions'
 
 interface IValidMessage {
-  isValid: boolean;
-  siweMessageData: SiweMessage;
+  isValid: boolean
+  siweMessageData: SiweMessage
 }
 
 @Injectable()
@@ -21,15 +21,15 @@ export class AuthService {
     return crypto
       .randomBytes(Math.ceil(length / 2))
       .toString('hex')
-      .slice(0, length);
+      .slice(0, length)
   }
 
   async verifyPayload(payload: MiniAppWalletAuthSuccessPayload, nonce: string) {
     const validMessage = (await verifySiweMessage(
       payload,
       nonce,
-    )) as IValidMessage;
-    return validMessage.isValid;
+    )) as IValidMessage
+    return validMessage.isValid
   }
 
   async createUser(worldID: string, name: string, profilePicture: string) {
@@ -37,10 +37,10 @@ export class AuthService {
       where: { worldID },
       update: { name, profilePicture },
       create: { worldID, name, profilePicture },
-    });
+    })
 
-    if (!user) throw new CreateUserException();
+    if (!user) throw new CreateUserException()
 
-    return user;
+    return user
   }
 }
