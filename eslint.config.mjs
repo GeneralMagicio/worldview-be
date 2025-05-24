@@ -1,4 +1,3 @@
-// @ts-check
 import eslint from '@eslint/js';
 import * as eslintPluginImport from 'eslint-plugin-import';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
@@ -31,9 +30,6 @@ export default tseslint.config(
       import: eslintPluginImport,
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
       'prettier/prettier': [
         'error',
         {
