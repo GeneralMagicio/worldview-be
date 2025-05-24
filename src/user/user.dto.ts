@@ -120,7 +120,7 @@ export class UserActivitiesResponseDto {
 export class GetUserVotesDto {
   @IsNotEmpty()
   @Validate(IsPositiveInteger)
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }) => parseInt(value as string, 10))
   pollId: number
 }
 

@@ -1,7 +1,6 @@
-import { NestFactory } from '@nestjs/core'
+import { BadRequestException, ValidationPipe } from '@nestjs/common'
+import { NestFactory, Reflector } from '@nestjs/core'
 import cookieParser from 'cookie-parser'
-import { Reflector } from '@nestjs/core'
-import { ValidationPipe, BadRequestException } from '@nestjs/common'
 import { AppModule } from './app.module'
 import { JwtAuthGuard } from './auth/jwt-auth.guard'
 import { JwtService } from './auth/jwt.service'
@@ -76,4 +75,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000)
 }
 
-bootstrap()
+bootstrap().catch(e => console.error('bootstrap error:', e))

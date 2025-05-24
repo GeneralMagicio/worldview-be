@@ -5,7 +5,7 @@ import {
 
 @ValidatorConstraint({ name: 'isNonNegativeInteger', async: false })
 export class IsPositiveInteger implements ValidatorConstraintInterface {
-  validate(value: any): boolean {
+  validate(value: unknown): boolean {
     if (typeof value !== 'number' && typeof value !== 'string') {
       return false
     }
@@ -19,11 +19,11 @@ export class IsPositiveInteger implements ValidatorConstraintInterface {
 
 @ValidatorConstraint({ name: 'IsRecordStringNumber', async: false })
 export class IsRecordStringNumber implements ValidatorConstraintInterface {
-  validate(value: any): boolean {
+  validate(value: unknown): boolean {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return false
     }
-    return Object.entries(value).every(
+    return Object.entries(value as Record<string, unknown>).every(
       ([key, val]) => typeof key === 'string' && typeof val === 'number',
     )
   }

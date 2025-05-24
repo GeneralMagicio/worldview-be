@@ -24,7 +24,7 @@ export class JwtService {
     }
   }
 
-  decode(token: string): null | { [key: string]: any } | string {
+  decode(token: string): null | JwtPayload | string {
     return jwt.decode(token)
   }
 }

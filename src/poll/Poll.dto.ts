@@ -78,7 +78,7 @@ export class DraftPollDto {
 
   @IsOptional()
   @Validate(IsPositiveInteger)
-  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) => (value ? parseInt(value as string, 10) : undefined))
   pollId?: number
 }
 
