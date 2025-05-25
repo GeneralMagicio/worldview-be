@@ -1,1 +1,1 @@
-export const VOTING_POWER = 100;
+export const VOTING_POWER = 100

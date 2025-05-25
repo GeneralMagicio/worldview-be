@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
@@ -10,122 +10,122 @@ import {
   IsString,
   Min,
   Validate,
-} from 'class-validator';
-import { IsPositiveInteger } from '../common/validators';
+} from 'class-validator'
+import { IsPositiveInteger } from '../common/validators'
 
 export class CreatePollDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title: string
 
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description: string
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  options: string[];
+  options: string[]
 
   @IsDateString()
   @IsNotEmpty()
-  startDate: string;
+  startDate: string
 
   @IsDateString()
   @IsNotEmpty()
-  endDate: string;
+  endDate: string
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  tags: string[];
+  tags: string[]
 
   @IsBoolean()
   @IsOptional()
-  isAnonymous?: boolean;
+  isAnonymous?: boolean
 }
 
 export class DraftPollDto {
   @IsOptional()
   @IsString()
-  title?: string;
+  title?: string
 
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  options?: string[];
+  options?: string[]
 
   @IsOptional()
   @IsDateString()
-  startDate?: string;
+  startDate?: string
 
   @IsOptional()
   @IsDateString()
-  endDate?: string;
+  endDate?: string
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags?: string[];
+  tags?: string[]
 
   @IsOptional()
   @IsBoolean()
-  isAnonymous?: boolean;
+  isAnonymous?: boolean
 
   @IsOptional()
   @Validate(IsPositiveInteger)
-  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
-  pollId?: number;
+  @Transform(({ value }) => (value ? parseInt(value as string, 10) : undefined))
+  pollId?: number
 }
 
 export class GetPollsDto {
   @IsString()
   @IsOptional()
-  search?: string;
+  search?: string
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page?: number = 1
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit?: number = 10;
+  limit?: number = 10
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  isActive?: boolean;
+  isActive?: boolean
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  userVoted?: boolean;
+  userVoted?: boolean
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  userCreated?: boolean;
+  userCreated?: boolean
 
   @IsOptional()
   @IsEnum(['endDate', 'participantCount', 'creationDate'])
-  sortBy?: 'endDate' | 'participantCount' | 'creationDate';
+  sortBy?: 'endDate' | 'participantCount' | 'creationDate'
 
   @IsOptional()
   @IsEnum(['asc', 'desc'])
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: 'asc' | 'desc'
 }
 
 export class GetPollVotesDto {
   @IsInt()
   @Type(() => Number)
   @IsNotEmpty()
-  pollId: number;
+  pollId: number
 }

@@ -1,5 +1,5 @@
-import { ActionType } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
+import { ActionType } from '@prisma/client'
+import { Transform, Type } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
@@ -11,189 +11,189 @@ import {
   IsOptional,
   IsString,
   Validate,
-} from 'class-validator';
-import { IsPositiveInteger, IsRecordStringNumber } from '../common/validators';
+} from 'class-validator'
+import { IsPositiveInteger, IsRecordStringNumber } from '../common/validators'
 
 export class GetUserDataDto {
   @IsString()
   @IsNotEmpty()
-  worldID: string;
+  worldID: string
 }
 
 export class UserDataResponseDto {
   @IsNumber()
   @IsNotEmpty()
-  pollsCreated: number;
+  pollsCreated: number
 
   @IsNumber()
   @IsNotEmpty()
-  pollsParticipated: number;
+  pollsParticipated: number
 
   @IsString()
   @IsNotEmpty()
-  worldID: string;
+  worldID: string
 
   @IsString()
   @IsOptional()
-  worldProfilePic?: string | null;
+  worldProfilePic?: string | null
 
   @IsString()
   @IsOptional()
-  name?: string | null;
+  name?: string | null
 }
 
 export class GetUserActivitiesDto {
   @IsString()
   @IsNotEmpty()
-  worldID: string;
+  worldID: string
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  isActive?: boolean;
+  isActive?: boolean
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  isInactive?: boolean;
+  isInactive?: boolean
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  isCreated?: boolean;
+  isCreated?: boolean
 
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  isParticipated?: boolean;
+  isParticipated?: boolean
 
   @IsString()
   @IsOptional()
-  search?: string;
+  search?: string
 }
 
 export class UserActionDto {
   @IsInt()
-  id: number;
+  id: number
 
   @IsEnum([ActionType.CREATED, ActionType.VOTED])
-  type: ActionType;
+  type: ActionType
 
   @IsInt()
-  pollId: number;
+  pollId: number
 
   @IsString()
-  pollTitle: string;
+  pollTitle: string
 
   @IsString()
-  pollDescription: string;
+  pollDescription: string
 
   @IsDateString()
-  endDate: string;
+  endDate: string
 
   @IsBoolean()
-  isActive: boolean;
+  isActive: boolean
 
   @IsInt()
-  votersParticipated: number;
+  votersParticipated: number
 
   @IsString()
-  authorWorldId: string;
+  authorWorldId: string
 
   @IsString()
-  authorName: string;
+  authorName: string
 
   @IsString()
   @IsOptional()
-  authorProfilePic?: string | null;
+  authorProfilePic?: string | null
 
   @IsDateString()
-  createdAt: string;
+  createdAt: string
 }
 
 export class UserActivitiesResponseDto {
   @IsArray()
   @Type(() => UserActionDto)
-  userActions: UserActionDto[];
+  userActions: UserActionDto[]
 }
 
 export class GetUserVotesDto {
   @IsNotEmpty()
   @Validate(IsPositiveInteger)
-  @Transform(({ value }) => parseInt(value, 10))
-  pollId: number;
+  @Transform(({ value }) => parseInt(value as string, 10))
+  pollId: number
 }
 
 export class UserVotesResponseDto {
   @IsNotEmpty()
   @IsString()
-  voteID: string;
+  voteID: string
 
   @IsNotEmpty()
   @IsString({ each: true })
-  options: string[];
+  options: string[]
 
   @IsNumber()
   @IsNotEmpty()
-  votingPower: number;
+  votingPower: number
 
   @Validate(IsRecordStringNumber)
   @IsOptional()
-  weightDistribution?: Record<string, number>;
+  weightDistribution?: Record<string, number>
 }
 
 export class SetVoteDto {
   @IsNotEmpty()
   @Validate(IsPositiveInteger)
-  pollId: number;
+  pollId: number
 
   @IsNotEmpty()
   @Validate(IsRecordStringNumber)
-  weightDistribution: Record<string, number>;
+  weightDistribution: Record<string, number>
 }
 
 export class SetVoteResponseDto {
   @IsNotEmpty()
   @IsString()
-  voteID: string;
+  voteID: string
 
   @IsNotEmpty()
   @IsNumber()
-  actionId: number;
+  actionId: number
 }
 
 export class EditVoteDto {
   @IsNotEmpty()
   @IsString()
-  voteID: string;
+  voteID: string
 
   @IsNotEmpty()
   @Validate(IsRecordStringNumber)
-  weightDistribution: Record<string, number>;
+  weightDistribution: Record<string, number>
 }
 
 export class EditVoteResponseDto {
   @IsNotEmpty()
   @IsNumber()
-  actionId: number;
+  actionId: number
 }
 
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name: string
 
   @IsString()
   @IsNotEmpty()
-  worldID: string;
+  worldID: string
 
   @IsString()
   @IsOptional()
-  profilePicture?: string;
+  profilePicture?: string
 }
 
 export class CreateUserResponseDto {
   @IsNotEmpty()
   @IsNumber()
-  userId: number;
+  userId: number
 }
