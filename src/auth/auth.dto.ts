@@ -1,16 +1,16 @@
 import {
+  MiniAppWalletAuthSuccessPayload,
+  ISuccessResult,
+  VerificationLevel,
+} from '@worldcoin/minikit-js'
+import { Transform, Type } from 'class-transformer'
+import {
   IsNotEmpty,
   IsOptional,
   IsString,
   IsEnum,
   ValidateNested,
 } from 'class-validator'
-import {
-  MiniAppWalletAuthSuccessPayload,
-  ISuccessResult,
-  VerificationLevel,
-} from '@worldcoin/minikit-js'
-import { Transform, Type } from 'class-transformer'
 
 export class UserDetailsDto {
   @IsString()

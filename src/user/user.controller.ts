@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { User } from 'src/auth/user.decorator'
 import { Public } from 'src/auth/jwt-auth.guard'
+import { User } from 'src/auth/user.decorator'
+import { GetCountDto } from '../common/common.dto'
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -16,7 +17,6 @@ import {
   UserVotesResponseDto,
 } from './user.dto'
 import { UserService } from './user.service'
-import { GetCountDto } from '../common/common.dto'
 
 @Controller('user')
 export class UserController {

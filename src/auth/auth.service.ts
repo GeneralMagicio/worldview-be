@@ -5,8 +5,8 @@ import {
   verifySiweMessage,
   SiweMessage,
 } from '@worldcoin/minikit-js'
-import { DatabaseService } from 'src/database/database.service'
 import { CreateUserException } from 'src/common/exceptions'
+import { DatabaseService } from 'src/database/database.service'
 
 interface IValidMessage {
   isValid: boolean

@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common'
 import { SetMetadata } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { Request } from 'express'
 import { VerificationLevel } from '@worldcoin/minikit-js'
+import { Request } from 'express'
 import { InsufficientVerificationLevelException } from 'src/common/exceptions'
 import { JwtService } from './jwt.service'
 
