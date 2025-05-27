@@ -44,6 +44,18 @@ export class PollService {
     })
   }
 
+  private mapPollsWithVoteStatus(
+    polls: Array<{ votes: { voteID: string }[] } & Record<string, unknown>>,
+  ) {
+    return polls.map(poll => {
+      const { votes, ...pollWithoutVotes } = poll
+      return {
+        ...pollWithoutVotes,
+        hasVoted: votes.length > 0,
+      }
+    })
+  }
+
   private async searchPolls(searchTerm: string): Promise<number[]> {
     const searchQuery = searchTerm
       .split(' ')
@@ -370,14 +382,7 @@ export class PollService {
 
       const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
 
-      const pollsWithVoteStatus = paginatedPolls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
 
       return {
         polls: pollsWithVoteStatus,
@@ -409,7 +414,7 @@ export class PollService {
                   select: { voteID: true },
                 },
               },
-              orderBy: { participantCount: 'desc' }, // Highest voter count first for active polls
+              orderBy: { participantCount: sortOrder }, // Highest voter count first for active polls
               take: Number(limit) + skip,
             }),
             this.databaseService.poll.findMany({
@@ -421,7 +426,7 @@ export class PollService {
                   select: { voteID: true },
                 },
               },
-              orderBy: { participantCount: 'desc' }, // Highest voter count first for ended polls too
+              orderBy: { participantCount: sortOrder }, // Highest voter count first for ended polls too
               take: Number(limit) + skip,
             }),
             this.databaseService.poll.count({ where: filters }),
@@ -430,14 +435,7 @@ export class PollService {
         const combinedPolls = [...activePolls, ...endedPolls]
         const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
 
-        const pollsWithVoteStatus = paginatedPolls.map(poll => {
-          const { votes, ...pollWithoutVotes } = poll
-
-          return {
-            ...pollWithoutVotes,
-            hasVoted: votes.length > 0,
-          }
-        })
+        const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
 
         return {
           polls: pollsWithVoteStatus,
@@ -467,14 +465,7 @@ export class PollService {
         this.databaseService.poll.count({ where: filters }),
       ])
 
-      const pollsWithVoteStatus = polls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(polls)
 
       return {
         polls: pollsWithVoteStatus,
@@ -507,14 +498,7 @@ export class PollService {
         this.databaseService.poll.count({ where: filters }),
       ])
 
-      const pollsWithVoteStatus = polls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(polls)
 
       return {
         polls: pollsWithVoteStatus,
