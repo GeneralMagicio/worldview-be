@@ -109,6 +109,9 @@ export class UserActionDto {
 
   @IsDateString()
   createdAt: string
+
+  @IsBoolean()
+  hasVoted: boolean
 }
 
 export class UserActivitiesResponseDto {
