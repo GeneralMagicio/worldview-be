@@ -115,6 +115,7 @@ export class UserService {
 
   async getUserActivities(
     dto: GetUserActivitiesDto,
+    requestingUserWorldID: string,
   ): Promise<UserActivitiesResponseDto> {
     const user = await this.databaseService.user.findUnique({
       where: { worldID: dto.worldID },
@@ -122,6 +123,16 @@ export class UserService {
     })
 
     if (!user) {
+      throw new UserNotFoundException()
+    }
+
+    // Get the requesting user's ID for hasVoted check
+    const requestingUser = await this.databaseService.user.findUnique({
+      where: { worldID: requestingUserWorldID },
+      select: { id: true },
+    })
+
+    if (!requestingUser) {
       throw new UserNotFoundException()
     }
 
@@ -202,6 +213,21 @@ export class UserService {
       },
     })
 
+    // Get all poll IDs to check for votes by the requesting user
+    const pollIdsToCheck = userActions.map(action => action.poll.pollId)
+
+    // Get votes by the requesting user for these polls
+    const requestingUserVotes = await this.databaseService.vote.findMany({
+      where: {
+        userId: requestingUser.id,
+        pollId: { in: pollIdsToCheck },
+      },
+      select: { pollId: true },
+    })
+
+    // Create a set of poll IDs that the requesting user has voted on
+    const votedPollIds = new Set(requestingUserVotes.map(vote => vote.pollId))
+
     const actions: UserActionDto[] = await Promise.all(
       // TODO: it's a temporary work around, should add authorWorldId to UserAction later
       userActions.map(async action => {
@@ -223,6 +249,7 @@ export class UserService {
           authorName: author?.name || '',
           authorProfilePic: author?.profilePicture || null,
           createdAt: action.createdAt.toISOString(),
+          hasVoted: votedPollIds.has(action.poll.pollId),
         }
       }),
     )

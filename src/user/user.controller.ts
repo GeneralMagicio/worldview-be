@@ -32,8 +32,9 @@ export class UserController {
   @Get('getUserActivities')
   async getUserActivities(
     @Query() query: GetUserActivitiesDto,
+    @User('worldID') worldID: string,
   ): Promise<UserActivitiesResponseDto> {
-    return await this.userService.getUserActivities(query)
+    return await this.userService.getUserActivities(query, worldID)
   }
 
   @Get('getUserVotes')
