@@ -13,7 +13,12 @@ import {
   UnauthorizedActionException,
   UserNotFoundException,
 } from '../common/exceptions'
-import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto'
+import {
+  CreatePollDto,
+  DraftPollDto,
+  GetPollsDto,
+  PollSortBy,
+} from './Poll.dto'
 
 const IS_VOTE_NORMALIZATION = process.env.ENABLE_VOTE_NORMALIZATION === 'true'
 
@@ -36,6 +41,18 @@ export class PollService {
     await prisma.poll.update({
       where: { pollId },
       data: { participantCount },
+    })
+  }
+
+  private mapPollsWithVoteStatus(
+    polls: Array<{ votes: { voteID: string }[] } & Record<string, unknown>>,
+  ) {
+    return polls.map(poll => {
+      const { votes, ...pollWithoutVotes } = poll
+      return {
+        ...pollWithoutVotes,
+        hasVoted: votes.length > 0,
+      }
     })
   }
 
@@ -241,7 +258,7 @@ export class PollService {
       userVoted,
       userCreated,
       search,
-      sortBy = 'endDate',
+      sortBy = PollSortBy.END_DATE,
       sortOrder = 'asc',
     } = query
     const skip = (page - 1) * limit
@@ -320,7 +337,7 @@ export class PollService {
 
     let orderBy: Prisma.PollOrderByWithRelationInput[] = []
 
-    if (sortBy === 'endDate') {
+    if (sortBy === PollSortBy.END_DATE) {
       const activeFilters = {
         ...filters,
         startDate: { lte: now },
@@ -365,23 +382,71 @@ export class PollService {
 
       const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
 
-      const pollsWithVoteStatus = paginatedPolls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
 
       return {
         polls: pollsWithVoteStatus,
         total,
       }
     } else if (sortBy) {
-      orderBy.push({
-        [sortBy]: sortOrder,
-      })
+      // creationDate or participantCount
+      if (sortBy === PollSortBy.PARTICIPANT_COUNT) {
+        // For participantCount: show active polls first (by highest voter count), then ended polls
+        const activeFilters = {
+          ...filters,
+          startDate: { lte: now },
+          endDate: { gt: now },
+        }
+
+        const endedFilters = {
+          ...filters,
+          endDate: { lte: now },
+        }
+
+        const [activePolls, endedPolls, total] =
+          await this.databaseService.$transaction([
+            this.databaseService.poll.findMany({
+              where: activeFilters,
+              include: {
+                author: true,
+                votes: {
+                  where: { userId },
+                  select: { voteID: true },
+                },
+              },
+              orderBy: { participantCount: sortOrder }, // Highest voter count first for active polls
+              take: Number(limit) + skip,
+            }),
+            this.databaseService.poll.findMany({
+              where: endedFilters,
+              include: {
+                author: true,
+                votes: {
+                  where: { userId },
+                  select: { voteID: true },
+                },
+              },
+              orderBy: { participantCount: sortOrder }, // Highest voter count first for ended polls too
+              take: Number(limit) + skip,
+            }),
+            this.databaseService.poll.count({ where: filters }),
+          ])
+
+        const combinedPolls = [...activePolls, ...endedPolls]
+        const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
+
+        const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
+
+        return {
+          polls: pollsWithVoteStatus,
+          total,
+        }
+      } else {
+        // creationDate
+        orderBy.push({
+          [sortBy]: sortOrder,
+        })
+      }
 
       const [polls, total] = await this.databaseService.$transaction([
         this.databaseService.poll.findMany({
@@ -400,14 +465,7 @@ export class PollService {
         this.databaseService.poll.count({ where: filters }),
       ])
 
-      const pollsWithVoteStatus = polls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(polls)
 
       return {
         polls: pollsWithVoteStatus,
@@ -440,14 +498,7 @@ export class PollService {
         this.databaseService.poll.count({ where: filters }),
       ])
 
-      const pollsWithVoteStatus = polls.map(poll => {
-        const { votes, ...pollWithoutVotes } = poll
-
-        return {
-          ...pollWithoutVotes,
-          hasVoted: votes.length > 0,
-        }
-      })
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(polls)
 
       return {
         polls: pollsWithVoteStatus,

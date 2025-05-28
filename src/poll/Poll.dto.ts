@@ -13,6 +13,12 @@ import {
 } from 'class-validator'
 import { IsPositiveInteger } from '../common/validators'
 
+export enum PollSortBy {
+  CREATION_DATE = 'creationDate',
+  END_DATE = 'endDate',
+  PARTICIPANT_COUNT = 'participantCount',
+}
+
 export class CreatePollDto {
   @IsString()
   @IsNotEmpty()
@@ -115,8 +121,8 @@ export class GetPollsDto {
   userCreated?: boolean
 
   @IsOptional()
-  @IsEnum(['endDate', 'participantCount', 'creationDate'])
-  sortBy?: 'endDate' | 'participantCount' | 'creationDate'
+  @IsEnum(PollSortBy)
+  sortBy?: PollSortBy
 
   @IsOptional()
   @IsEnum(['asc', 'desc'])
