@@ -388,65 +388,113 @@ export class PollService {
         polls: pollsWithVoteStatus,
         total,
       }
-    } else if (sortBy) {
-      // creationDate or participantCount
-      if (sortBy === PollSortBy.PARTICIPANT_COUNT) {
-        // For participantCount: show active polls first (by highest voter count), then ended polls
-        const activeFilters = {
-          ...filters,
-          startDate: { lte: now },
-          endDate: { gt: now },
-        }
-
-        const endedFilters = {
-          ...filters,
-          endDate: { lte: now },
-        }
-
-        const [activePolls, endedPolls, total] =
-          await this.databaseService.$transaction([
-            this.databaseService.poll.findMany({
-              where: activeFilters,
-              include: {
-                author: true,
-                votes: {
-                  where: { userId },
-                  select: { voteID: true },
-                },
-              },
-              orderBy: { participantCount: sortOrder }, // Highest voter count first for active polls
-              take: Number(limit) + skip,
-            }),
-            this.databaseService.poll.findMany({
-              where: endedFilters,
-              include: {
-                author: true,
-                votes: {
-                  where: { userId },
-                  select: { voteID: true },
-                },
-              },
-              orderBy: { participantCount: sortOrder }, // Highest voter count first for ended polls too
-              take: Number(limit) + skip,
-            }),
-            this.databaseService.poll.count({ where: filters }),
-          ])
-
-        const combinedPolls = [...activePolls, ...endedPolls]
-        const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
-
-        const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
-
-        return {
-          polls: pollsWithVoteStatus,
-          total,
-        }
-      } else {
-        // creationDate
-        orderBy.push({
-          [sortBy]: sortOrder,
-        })
+    } else if (sortBy === PollSortBy.PARTICIPANT_COUNT) {
+      // For participantCount: show active polls first (by highest voter count), then ended polls
+      const activeFilters = {
+        ...filters,
+        startDate: { lte: now },
+        endDate: { gt: now },
       }
+
+      const endedFilters = {
+        ...filters,
+        endDate: { lte: now },
+      }
+
+      const [activePolls, endedPolls, total] =
+        await this.databaseService.$transaction([
+          this.databaseService.poll.findMany({
+            where: activeFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { participantCount: sortOrder }, // Highest voter count first for active polls
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.findMany({
+            where: endedFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { participantCount: sortOrder }, // Highest voter count first for ended polls too
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.count({ where: filters }),
+        ])
+
+      const combinedPolls = [...activePolls, ...endedPolls]
+      const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
+
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
+
+      return {
+        polls: pollsWithVoteStatus,
+        total,
+      }
+    } else if (sortBy === PollSortBy.CLOSEST_END_DATE) {
+      // For closestEndDate: show active polls first (closest to ending), then ended polls
+      const activeFilters = {
+        ...filters,
+        startDate: { lte: now },
+        endDate: { gt: now },
+      }
+
+      const endedFilters = {
+        ...filters,
+        endDate: { lte: now },
+      }
+
+      const [activePolls, endedPolls, total] =
+        await this.databaseService.$transaction([
+          this.databaseService.poll.findMany({
+            where: activeFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { endDate: 'asc' }, // Closest to ending first for active polls
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.findMany({
+            where: endedFilters,
+            include: {
+              author: true,
+              votes: {
+                where: { userId },
+                select: { voteID: true },
+              },
+            },
+            orderBy: { endDate: 'desc' }, // Most recently ended first for ended polls
+            take: Number(limit) + skip,
+          }),
+          this.databaseService.poll.count({ where: filters }),
+        ])
+
+      const combinedPolls = [...activePolls, ...endedPolls]
+      const paginatedPolls = combinedPolls.slice(skip, skip + Number(limit))
+
+      const pollsWithVoteStatus = this.mapPollsWithVoteStatus(paginatedPolls)
+
+      return {
+        polls: pollsWithVoteStatus,
+        total,
+      }
+    } else if (sortBy) {
+      // creationDate or other sort types
+      orderBy.push({
+        [sortBy]: sortOrder,
+      })
 
       const [polls, total] = await this.databaseService.$transaction([
         this.databaseService.poll.findMany({

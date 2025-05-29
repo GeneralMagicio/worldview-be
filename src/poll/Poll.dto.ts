@@ -17,6 +17,7 @@ export enum PollSortBy {
   CREATION_DATE = 'creationDate',
   END_DATE = 'endDate',
   PARTICIPANT_COUNT = 'participantCount',
+  CLOSEST_END_DATE = 'closestEndDate',
 }
 
 export class CreatePollDto {
