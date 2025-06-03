@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Public } from 'src/auth/jwt-auth.guard'
+import { User } from 'src/auth/user.decorator'
+import { GetCountDto } from '../common/common.dto'
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -12,11 +15,8 @@ import {
   UserActivitiesResponseDto,
   UserDataResponseDto,
   UserVotesResponseDto,
-} from './user.dto';
-import { UserService } from './user.service';
-import { User } from 'src/auth/user.decorator';
-import { Public } from 'src/auth/jwt-auth.guard';
-import { GetCountDto } from '../common/common.dto';
+} from './user.dto'
+import { UserService } from './user.service'
 
 @Controller('user')
 export class UserController {
@@ -26,14 +26,15 @@ export class UserController {
   async getUserData(
     @Query() query: GetUserDataDto,
   ): Promise<UserDataResponseDto> {
-    return await this.userService.getUserData(query);
+    return await this.userService.getUserData(query)
   }
 
   @Get('getUserActivities')
   async getUserActivities(
     @Query() query: GetUserActivitiesDto,
+    @User('worldID') worldID: string,
   ): Promise<UserActivitiesResponseDto> {
-    return await this.userService.getUserActivities(query);
+    return await this.userService.getUserActivities(query, worldID)
   }
 
   @Get('getUserVotes')
@@ -41,7 +42,7 @@ export class UserController {
     @Query() query: GetUserVotesDto,
     @User('worldID') worldID: string,
   ): Promise<UserVotesResponseDto> {
-    return await this.userService.getUserVotes(query, worldID);
+    return await this.userService.getUserVotes(query, worldID)
   }
 
   @Post('setVote')
@@ -49,7 +50,7 @@ export class UserController {
     @Body() dto: SetVoteDto,
     @User('worldID') worldID: string,
   ): Promise<SetVoteResponseDto> {
-    return await this.userService.setVote(dto, worldID);
+    return await this.userService.setVote(dto, worldID)
   }
 
   @Post('editVote')
@@ -57,17 +58,17 @@ export class UserController {
     @Body() dto: EditVoteDto,
     @User('worldID') worldID: string,
   ): Promise<EditVoteResponseDto> {
-    return await this.userService.editVote(dto, worldID);
+    return await this.userService.editVote(dto, worldID)
   }
 
   @Post('createUser')
   async createUser(@Body() dto: CreateUserDto): Promise<CreateUserResponseDto> {
-    return await this.userService.createUser(dto);
+    return await this.userService.createUser(dto)
   }
 
   @Get('count')
   @Public()
   async getUserCount(@Query() query: GetCountDto): Promise<number> {
-    return await this.userService.getUserCount(query);
+    return await this.userService.getUserCount(query)
   }
 }

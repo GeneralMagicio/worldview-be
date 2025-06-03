@@ -7,12 +7,12 @@ import {
   Patch,
   Post,
   Query,
-} from '@nestjs/common';
-import { User } from 'src/auth/user.decorator';
-import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto';
-import { PollService } from './poll.service';
-import { Public } from 'src/auth/jwt-auth.guard';
-import { GetCountDto } from '../common/common.dto';
+} from '@nestjs/common'
+import { Public } from 'src/auth/jwt-auth.guard'
+import { User } from 'src/auth/user.decorator'
+import { GetCountDto } from '../common/common.dto'
+import { CreatePollDto, DraftPollDto, GetPollsDto } from './Poll.dto'
+import { PollService } from './poll.service'
 
 @Controller('poll')
 export class PollController {
@@ -23,7 +23,7 @@ export class PollController {
     @Body() dto: CreatePollDto,
     @User('worldID') worldID: string,
   ) {
-    return await this.pollService.createPoll(dto, worldID);
+    return await this.pollService.createPoll(dto, worldID)
   }
 
   @Patch('draft')
@@ -31,12 +31,12 @@ export class PollController {
     @Body() dto: DraftPollDto,
     @User('worldID') worldID: string,
   ) {
-    return await this.pollService.patchDraftPoll(dto, worldID);
+    return await this.pollService.patchDraftPoll(dto, worldID)
   }
 
   @Get('draft')
   async getDraftPoll(@User('worldID') worldID: string) {
-    return await this.pollService.getUserDraftPoll(worldID);
+    return await this.pollService.getUserDraftPoll(worldID)
   }
 
   @Get()
@@ -44,28 +44,28 @@ export class PollController {
     @Query() query: GetPollsDto,
     @User('worldID') worldID: string,
   ) {
-    return await this.pollService.getPolls(query, worldID);
+    return await this.pollService.getPolls(query, worldID)
   }
 
   @Get('count')
   @Public()
   async getPollsCount(@Query() query: GetCountDto): Promise<number> {
-    return await this.pollService.getPollsCount(query);
+    return await this.pollService.getPollsCount(query)
   }
 
   @Get(':id')
   async getPollDetails(@Param('id') id: number) {
-    return await this.pollService.getPollDetails(Number(id));
+    return await this.pollService.getPollDetails(Number(id))
   }
 
   @Get(':id/votes')
   async getPollVotes(@Param('id') id: number) {
-    return await this.pollService.getPollVotes(Number(id));
+    return await this.pollService.getPollVotes(Number(id))
   }
 
   @Delete(':id')
   async deletePoll(@Param('id') id: number, @User('worldID') worldID: string) {
-    const poll = await this.pollService.deletePoll(Number(id), worldID);
-    return { message: 'Poll deleted', poll };
+    const poll = await this.pollService.deletePoll(Number(id), worldID)
+    return { message: 'Poll deleted', poll }
   }
 }
