@@ -71,4 +71,10 @@ export class UserController {
   async getUserCount(@Query() query: GetCountDto): Promise<number> {
     return await this.userService.getUserCount(query)
   }
+
+  @Get('listAdmins')
+  @Public()
+  async listAdmins(): Promise<string[]> {
+    return await this.userService.listAdmins()
+  }
 }
