@@ -274,7 +274,7 @@ export class UserService {
       },
       select: { endDate: true, options: true },
     })
-    if (!poll || (poll.endDate && poll.endDate < new Date())) {
+    if (!poll) {
       throw new PollNotFoundException()
     }
     const vote = await this.databaseService.vote.findFirst({
