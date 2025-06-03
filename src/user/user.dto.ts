@@ -89,6 +89,9 @@ export class UserActionDto {
   pollDescription: string
 
   @IsDateString()
+  startDate: string
+
+  @IsDateString()
   endDate: string
 
   @IsBoolean()

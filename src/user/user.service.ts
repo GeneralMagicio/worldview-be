@@ -205,6 +205,7 @@ export class UserService {
             title: true,
             description: true,
             isAnonymous: true,
+            startDate: true,
             endDate: true,
             authorUserId: true,
             participantCount: true,
@@ -242,6 +243,9 @@ export class UserService {
           pollTitle: action.poll.title || '',
           isAnonymous: action.poll.isAnonymous,
           pollDescription: action.poll.description ?? '',
+          startDate: action.poll.startDate
+            ? action.poll.startDate.toISOString()
+            : '',
           endDate: action.poll.endDate ? action.poll.endDate.toISOString() : '',
           isActive: action.poll.endDate ? action.poll.endDate >= now : false,
           votersParticipated: action.poll.participantCount,
