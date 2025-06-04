@@ -12,10 +12,10 @@ model User {
   worldID                String       @unique
   name                   String?
   profilePicture         String?
-  isAdmin                Boolean      @default(false)
   pollsCreatedCount      Int          @default(0)
   pollsParticipatedCount Int          @default(0)
   createdAt              DateTime     @default(now())
+  isAdmin                Boolean      @default(false)
   createdPolls           Poll[]       @relation("PollAuthor")
   actions                UserAction[]
   votes                  Vote[]
