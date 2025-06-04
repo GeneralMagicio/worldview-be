@@ -73,7 +73,6 @@ export class UserController {
   }
 
   @Get('listAdmins')
-  @Public()
   async listAdmins(): Promise<string[]> {
     return await this.userService.listAdmins()
   }
