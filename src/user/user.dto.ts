@@ -40,6 +40,10 @@ export class UserDataResponseDto {
   @IsString()
   @IsOptional()
   name?: string | null
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isAdmin: boolean
 }
 
 export class GetUserActivitiesDto {

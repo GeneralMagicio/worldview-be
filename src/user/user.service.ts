@@ -97,6 +97,7 @@ export class UserService {
         worldID: true,
         name: true,
         profilePicture: true,
+        isAdmin: true,
         pollsCreatedCount: true,
         pollsParticipatedCount: true,
       },
@@ -110,6 +111,7 @@ export class UserService {
       worldID: user.worldID,
       worldProfilePic: user.profilePicture,
       name: user.name,
+      isAdmin: user.isAdmin,
     }
   }
 
@@ -455,5 +457,13 @@ export class UserService {
     }
 
     return await this.databaseService.user.count({ where })
+  }
+
+  async listAdmins(): Promise<string[]> {
+    const admins = await this.databaseService.user.findMany({
+      where: { isAdmin: true },
+      select: { worldID: true },
+    })
+    return admins.map(admin => admin.worldID)
   }
 }

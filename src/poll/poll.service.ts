@@ -550,7 +550,7 @@ export class PollService {
   async deletePoll(pollId: number, worldID: string) {
     const user = await this.databaseService.user.findUnique({
       where: { worldID },
-      select: { id: true },
+      select: { id: true, isAdmin: true },
     })
     if (!user) {
       throw new UserNotFoundException()
@@ -561,7 +561,8 @@ export class PollService {
     if (!poll) {
       throw new PollNotFoundException()
     }
-    if (poll.authorUserId !== user.id) {
+    // Allow deletion if user is admin or if user is the poll author
+    if (!user.isAdmin && poll.authorUserId !== user.id) {
       throw new UnauthorizedActionException()
     }
 
